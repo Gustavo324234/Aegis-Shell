@@ -141,16 +141,14 @@ async def reset_password(req: PasswordResetRequest):
 async def get_public_system_state():
     client = AnkClient()
     try:
-        # We attempt to fetch without metadata to see if the Kernel allows it for state checking
-        # Or we can just use dummy metadata
-        status_data = await client.get_system_status("dummy", "dummy")
+        # Call without credentials to check if Kernel is initialized.
+        status_data = await client.get_system_status()
         return {"state": status_data.get("state", "STATE_OPERATIONAL")}
     except grpc.RpcError as e:
         # If it returns UNAUTHENTICATED, it means it's OPERATIONAL and expects real creds.
-        # If it returns INITIALIZING (maybe the Kernel allows it), we handle it.
         if e.code() == grpc.StatusCode.UNAUTHENTICATED:
             return {"state": "STATE_OPERATIONAL"}
-        # If it fails with another error, assume operational or error
+        # Any other error suggests initializing or server issue.
         return {"state": "STATE_INITIALIZING", "error": str(e.details())}
     except Exception as e:
         return {"state": "STATE_OPERATIONAL", "error": str(e)}

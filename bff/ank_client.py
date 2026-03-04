@@ -67,7 +67,7 @@ class AnkClient:
             print(f"gRPC Error in WatchTask: {e}")
             raise
 
-    async def get_system_status(self, tenant_id: str, session_key: str):
+    async def get_system_status(self, tenant_id: str = None, session_key: str = None):
         """
         Fetches the current health and hardware usage of the Kernel.
         """
@@ -75,7 +75,11 @@ class AnkClient:
             self.channel = grpc.aio.insecure_channel(self.target)
             self.stub = kernel_pb2_grpc.KernelServiceStub(self.channel)
 
-        metadata = self._get_metadata(tenant_id, session_key)
+        metadata = (
+            self._get_metadata(tenant_id, session_key)
+            if tenant_id and session_key
+            else []
+        )
 
         try:
             response = await self.stub.GetSystemStatus(
