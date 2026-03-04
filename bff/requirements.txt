@@ -3,7 +3,7 @@ uvicorn
 grpcio>=1.62.1
 grpcio-tools>=1.62.1
 pycryptodome
-python-multipart==0.0.9
-pydantic==2.6.3
-websockets==12.0
+python-multipart>=0.0.18
+pydantic>=2.9.0
+websockets>=13.0
 setuptools
