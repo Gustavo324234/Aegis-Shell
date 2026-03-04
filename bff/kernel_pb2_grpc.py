@@ -61,6 +61,21 @@ class KernelServiceStub(object):
                 request_serializer=kernel__pb2.PCB.SerializeToString,
                 response_deserializer=kernel__pb2.TaskEvent.FromString,
                 _registered_method=True)
+        self.InitializeMasterAdmin = channel.unary_unary(
+                '/ank.v1.KernelService/InitializeMasterAdmin',
+                request_serializer=kernel__pb2.AdminSetupRequest.SerializeToString,
+                response_deserializer=kernel__pb2.AdminSetupResponse.FromString,
+                _registered_method=True)
+        self.CreateTenant = channel.unary_unary(
+                '/ank.v1.KernelService/CreateTenant',
+                request_serializer=kernel__pb2.TenantCreateRequest.SerializeToString,
+                response_deserializer=kernel__pb2.TenantCreateResponse.FromString,
+                _registered_method=True)
+        self.ResetTenantPassword = channel.unary_unary(
+                '/ank.v1.KernelService/ResetTenantPassword',
+                request_serializer=kernel__pb2.PasswordResetRequest.SerializeToString,
+                response_deserializer=kernel__pb2.Empty.FromString,
+                _registered_method=True)
 
 
 class KernelServiceServicer(object):
@@ -104,6 +119,28 @@ class KernelServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def InitializeMasterAdmin(self, request, context):
+        """--- IDENTITY & TENANT MANAGEMENT ---
+        Initializes the super admin if not yet configured
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def CreateTenant(self, request, context):
+        """Generates a new tenant, assigns port and temporary passphrase
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ResetTenantPassword(self, request, context):
+        """Forces a password reset for a given tenant
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_KernelServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -131,6 +168,21 @@ def add_KernelServiceServicer_to_server(servicer, server):
                     servicer.TeleportProcess,
                     request_deserializer=kernel__pb2.PCB.FromString,
                     response_serializer=kernel__pb2.TaskEvent.SerializeToString,
+            ),
+            'InitializeMasterAdmin': grpc.unary_unary_rpc_method_handler(
+                    servicer.InitializeMasterAdmin,
+                    request_deserializer=kernel__pb2.AdminSetupRequest.FromString,
+                    response_serializer=kernel__pb2.AdminSetupResponse.SerializeToString,
+            ),
+            'CreateTenant': grpc.unary_unary_rpc_method_handler(
+                    servicer.CreateTenant,
+                    request_deserializer=kernel__pb2.TenantCreateRequest.FromString,
+                    response_serializer=kernel__pb2.TenantCreateResponse.SerializeToString,
+            ),
+            'ResetTenantPassword': grpc.unary_unary_rpc_method_handler(
+                    servicer.ResetTenantPassword,
+                    request_deserializer=kernel__pb2.PasswordResetRequest.FromString,
+                    response_serializer=kernel__pb2.Empty.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -270,6 +322,87 @@ class KernelService(object):
             '/ank.v1.KernelService/TeleportProcess',
             kernel__pb2.PCB.SerializeToString,
             kernel__pb2.TaskEvent.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def InitializeMasterAdmin(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/ank.v1.KernelService/InitializeMasterAdmin',
+            kernel__pb2.AdminSetupRequest.SerializeToString,
+            kernel__pb2.AdminSetupResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def CreateTenant(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/ank.v1.KernelService/CreateTenant',
+            kernel__pb2.TenantCreateRequest.SerializeToString,
+            kernel__pb2.TenantCreateResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ResetTenantPassword(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/ank.v1.KernelService/ResetTenantPassword',
+            kernel__pb2.PasswordResetRequest.SerializeToString,
+            kernel__pb2.Empty.FromString,
             options,
             channel_credentials,
             insecure,

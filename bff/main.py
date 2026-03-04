@@ -24,6 +24,24 @@ class AuthRequest(BaseModel):
     session_key: str
 
 
+class AdminSetupRequest(BaseModel):
+    username: str
+    passphrase: str
+
+
+class TenantCreateRequest(BaseModel):
+    admin_tenant_id: str
+    admin_session_key: str
+    username: str
+
+
+class PasswordResetRequest(BaseModel):
+    tenant_id: str
+    admin_tenant_id: str
+    admin_session_key: str
+    new_passphrase: str
+
+
 # Configurar CORS para desarrollo
 app.add_middleware(
     CORSMiddleware,
@@ -54,6 +72,9 @@ async def login(auth: AuthRequest):
         return {"message": "Citadel Handshake Successful", "status": "authenticated"}
 
     except grpc.RpcError as e:
+        print(
+            f"DEBUG: Handshake failed for tenant '{auth.tenant_id}'. gRPC Code: {e.code()}, Details: {e.details()}"
+        )
         if e.code() == grpc.StatusCode.UNAUTHENTICATED:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -68,6 +89,71 @@ async def login(auth: AuthRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"BFF Auth Error: {str(e)}",
         )
+
+
+@app.post("/api/admin/setup")
+async def setup_admin(req: AdminSetupRequest):
+    client = AnkClient()
+    try:
+        response = await client.initialize_master_admin(req.username, req.passphrase)
+        return response
+    except grpc.RpcError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Admin Setup Error: {e.details()}",
+        )
+
+
+@app.post("/api/admin/tenant")
+async def create_tenant(req: TenantCreateRequest):
+    client = AnkClient()
+    try:
+        response = await client.create_tenant(
+            req.username, req.admin_tenant_id, req.admin_session_key
+        )
+        return response
+    except grpc.RpcError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Create Tenant Error: {e.details()}",
+        )
+
+
+@app.post("/api/admin/reset_password")
+async def reset_password(req: PasswordResetRequest):
+    client = AnkClient()
+    try:
+        await client.reset_tenant_password(
+            req.tenant_id,
+            req.new_passphrase,
+            req.admin_tenant_id,
+            req.admin_session_key,
+        )
+        return {"success": True, "message": "Password reset successful"}
+    except grpc.RpcError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Reset Password Error: {e.details()}",
+        )
+
+
+@app.get("/api/system/state")
+async def get_public_system_state():
+    client = AnkClient()
+    try:
+        # We attempt to fetch without metadata to see if the Kernel allows it for state checking
+        # Or we can just use dummy metadata
+        status_data = await client.get_system_status("dummy", "dummy")
+        return {"state": status_data.get("state", "STATE_OPERATIONAL")}
+    except grpc.RpcError as e:
+        # If it returns UNAUTHENTICATED, it means it's OPERATIONAL and expects real creds.
+        # If it returns INITIALIZING (maybe the Kernel allows it), we handle it.
+        if e.code() == grpc.StatusCode.UNAUTHENTICATED:
+            return {"state": "STATE_OPERATIONAL"}
+        # If it fails with another error, assume operational or error
+        return {"state": "STATE_INITIALIZING", "error": str(e.details())}
+    except Exception as e:
+        return {"state": "STATE_OPERATIONAL", "error": str(e)}
 
 
 @app.get("/api/status")

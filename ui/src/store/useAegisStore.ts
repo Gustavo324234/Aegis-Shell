@@ -27,6 +27,8 @@ interface AegisState {
     socket: WebSocket | null;
     activePid: string | null;
     isAuthenticated: boolean;
+    isAdmin: boolean;
+    systemState: 'STATE_INITIALIZING' | 'STATE_OPERATIONAL' | 'UNKNOWN';
     tenantId: string | null;
     sessionKey: string | null;
 
@@ -38,6 +40,7 @@ interface AegisState {
     setStatus: (status: SystemStatus) => void;
     clearHistory: () => void;
     startTelemetryPolling: (tenantId: string) => void;
+    fetchSystemState: () => Promise<void>;
     setAuth: (tenantId: string, sessionKey: string) => void;
     authenticate: (tenantId: string, passphrase: string) => Promise<boolean>;
     logout: () => void;
@@ -58,6 +61,8 @@ export const useAegisStore = create<AegisState>((set, get) => ({
     socket: null,
     activePid: null,
     isAuthenticated: false,
+    isAdmin: false,
+    systemState: 'UNKNOWN',
     tenantId: null,
     sessionKey: null,
 
@@ -80,6 +85,19 @@ export const useAegisStore = create<AegisState>((set, get) => ({
 
         poll(); // Initial immediate call
         telemetryInterval = window.setInterval(poll, 3000); // Decoupled polling every 3s
+    },
+
+    fetchSystemState: async () => {
+        try {
+            const response = await fetch('/api/system/state');
+            if (response.ok) {
+                const data = await response.json();
+                set({ systemState: data.state });
+            }
+        } catch (error) {
+            console.error('Failed to fetch system state:', error);
+            set({ systemState: 'UNKNOWN' });
+        }
     },
 
     connect: (tenantId, sessionKey) => {
@@ -240,7 +258,9 @@ export const useAegisStore = create<AegisState>((set, get) => ({
                 set({
                     tenantId,
                     sessionKey: derivedKey,
-                    isAuthenticated: true
+                    isAuthenticated: true,
+                    // Simple logic for now: if tenant ID is root or admin it's admin.
+                    isAdmin: tenantId.toLowerCase() === 'root' || tenantId.toLowerCase() === 'admin'
                 });
                 // Autoconnect se maneja en el useEffect de App.tsx al cambiar isAuthenticated
                 return true;
@@ -256,6 +276,7 @@ export const useAegisStore = create<AegisState>((set, get) => ({
         get().disconnect();
         set({
             isAuthenticated: false,
+            isAdmin: false,
             tenantId: null,
             sessionKey: null,
             messages: []

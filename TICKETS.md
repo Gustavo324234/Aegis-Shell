@@ -19,6 +19,8 @@
     *   *Completado:* Soporte para servir el build de React (`dist`) desde FastAPI y enrutamiento SPA (catch-all).
 *   **[SH-108] Security: Repository Protection (.gitignore)**
     *   *Completado:* Implementación de reglas de exclusión para proteger secretos, claves y artefactos de compilación.
+*   **[SH-109] Identity & Access Management (Admin Dashboard)**
+    *   *Completado:* Sistema de inicialización Zero-Knowledge, generador de enclaves (Tenants) por puerto y rotación forzada de contraseñas.
 
 ## 🟦 IN PROGRESS
 *   (All current core tickets completed)

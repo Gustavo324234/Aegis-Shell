@@ -85,3 +85,58 @@ class AnkClient:
         except grpc.RpcError as e:
             print(f"gRPC Error in GetSystemStatus: {e}")
             raise
+
+    async def initialize_master_admin(self, username: str, passphrase: str):
+        if not self.stub:
+            self.channel = grpc.aio.insecure_channel(self.target)
+            self.stub = kernel_pb2_grpc.KernelServiceStub(self.channel)
+
+        request = kernel_pb2.AdminSetupRequest(username=username, passphrase=passphrase)
+
+        # Admin initialization doesn't need auth metadata
+        try:
+            response = await self.stub.InitializeMasterAdmin(request)
+            return MessageToDict(response, preserving_proto_field_name=True)
+        except grpc.RpcError as e:
+            print(f"gRPC Error in InitializeMasterAdmin: {e}")
+            raise
+
+    async def create_tenant(
+        self, username: str, admin_tenant_id: str, admin_session_key: str
+    ):
+        if not self.stub:
+            self.channel = grpc.aio.insecure_channel(self.target)
+            self.stub = kernel_pb2_grpc.KernelServiceStub(self.channel)
+
+        request = kernel_pb2.TenantCreateRequest(username=username)
+        metadata = self._get_metadata(admin_tenant_id, admin_session_key)
+
+        try:
+            response = await self.stub.CreateTenant(request, metadata=metadata)
+            return MessageToDict(response, preserving_proto_field_name=True)
+        except grpc.RpcError as e:
+            print(f"gRPC Error in CreateTenant: {e}")
+            raise
+
+    async def reset_tenant_password(
+        self,
+        tenant_id: str,
+        new_passphrase: str,
+        admin_tenant_id: str,
+        admin_session_key: str,
+    ):
+        if not self.stub:
+            self.channel = grpc.aio.insecure_channel(self.target)
+            self.stub = kernel_pb2_grpc.KernelServiceStub(self.channel)
+
+        request = kernel_pb2.PasswordResetRequest(
+            tenant_id=tenant_id, new_passphrase=new_passphrase
+        )
+        metadata = self._get_metadata(admin_tenant_id, admin_session_key)
+
+        try:
+            response = await self.stub.ResetTenantPassword(request, metadata=metadata)
+            return True
+        except grpc.RpcError as e:
+            print(f"gRPC Error in ResetTenantPassword: {e}")
+            raise

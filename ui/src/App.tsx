@@ -1,24 +1,46 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield } from 'lucide-react';
 import { useAegisStore } from './store/useAegisStore';
 import ChatTerminal from './components/ChatTerminal';
 import LoginScreen from './components/LoginScreen';
+import AdminSetupScreen from './components/AdminSetupScreen';
+import AdminDashboard from './components/AdminDashboard';
+import ForcePasswordChangeScreen from './components/ForcePasswordChangeScreen';
 
 function App() {
-    const { status, isAuthenticated, tenantId, sessionKey, connect } = useAegisStore();
+    const { status, isAuthenticated, isAdmin, systemState, tenantId, sessionKey, connect, fetchSystemState } = useAegisStore();
+    const [needsPasswordReset, setNeedsPasswordReset] = useState(false);
+
+    // Initial system state check
+    useEffect(() => {
+        fetchSystemState();
+    }, [fetchSystemState]);
 
     // Handle connection once authenticated
     useEffect(() => {
-        if (isAuthenticated && tenantId && sessionKey && status === 'disconnected') {
+        if (isAuthenticated && !isAdmin && !needsPasswordReset && tenantId && sessionKey && status === 'disconnected') {
             connect(tenantId, sessionKey);
         }
-    }, [isAuthenticated, tenantId, sessionKey, status, connect]);
+    }, [isAuthenticated, isAdmin, needsPasswordReset, tenantId, sessionKey, status, connect]);
 
     return (
         <div className="bg-black min-h-screen text-white overflow-hidden">
             <AnimatePresence mode="wait">
-                {!isAuthenticated ? (
+                {systemState === 'UNKNOWN' ? (
+                    <motion.div key="loading_state" className="flex items-center justify-center h-screen">
+                        <Shield className="w-10 h-10 text-white/20 animate-pulse" />
+                    </motion.div>
+                ) : systemState === 'STATE_INITIALIZING' ? (
+                    <motion.div
+                        key="admin_setup"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <AdminSetupScreen onSetupComplete={() => fetchSystemState()} />
+                    </motion.div>
+                ) : !isAuthenticated ? (
                     <motion.div
                         key="login"
                         initial={{ opacity: 0 }}
@@ -29,7 +51,19 @@ function App() {
                     >
                         <LoginScreen />
                     </motion.div>
-                ) : (status === 'connecting' ? (
+                ) : isAdmin ? (
+                    <motion.div
+                        key="admin_dashboard"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                    >
+                        <AdminDashboard />
+                    </motion.div>
+                ) : needsPasswordReset ? (
+                    <motion.div key="force_reset">
+                        <ForcePasswordChangeScreen onPasswordChanged={() => setNeedsPasswordReset(false)} />
+                    </motion.div>
+                ) : status === 'connecting' ? (
                     <motion.div
                         key="loading"
                         initial={{ opacity: 0 }}
@@ -69,7 +103,7 @@ function App() {
                     >
                         <ChatTerminal />
                     </motion.div>
-                ))}
+                )}
             </AnimatePresence>
         </div>
     )

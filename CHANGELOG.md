@@ -1,5 +1,12 @@
 # CHANGELOG: Aegis Shell
 
+### [SH-109] Identity & Access Management - 2026-03-04
+- 🛠️ Interfaz actualizada con pantalla de `AdminSetupScreen` para la configuración inicial del enclave (Zero-Knowledge mode).
+- 🧑‍💻 Añadido el `AdminDashboard` para que el Master Admin pueda "Forjar nuevos Tenants" generando conexiones segregadas a puertos y contraseñas temporales.
+- 🔐 Implementado el `ForcePasswordChangeScreen` para requerir el cambio de claves temporales obligando a una rotación de contraseñas de primer inicio.
+- 📡 Backend modificado con endpoints para crear tenants, rotar claves, configurar la inicialización y recuperar el estado público del endpoint (`system_status`).
+
+
 ### [SH-108] Security: Repository Protection - 2026-03-04
 - 🛡️ Creado `.gitignore` robusto para prevenir la subida accidental de datos sensibles.
 - 🔐 Excluidos archivos de entorno (`.env*`), claves privadas (`.key`, `.pem`) y bases de datos locales.
