@@ -156,7 +156,7 @@ const LoginScreen: React.FC = () => {
 
                     <div className="mt-8 pt-6 border-t border-white/5 flex justify-between items-center text-[9px] font-mono text-white/20 uppercase tracking-tighter">
                         <span>Citadel Encrypted</span>
-                        <span>v1.0.4-Stable</span>
+                        <span>v1.1.2-ALPHA</span>
                     </div>
                 </div>
 
