@@ -1,8 +1,9 @@
-fastapi==0.110.0
-uvicorn==0.27.1
-grpcio==1.62.1
-grpcio-tools==1.62.1
-pycryptodome==3.20.0
+fastapi
+uvicorn
+grpcio>=1.62.1
+grpcio-tools>=1.62.1
+pycryptodome
 python-multipart==0.0.9
 pydantic==2.6.3
 websockets==12.0
+setuptools

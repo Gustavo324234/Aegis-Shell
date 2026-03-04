@@ -11,8 +11,8 @@ set -e  # Exit on error
 
 # --- Configuración (Placeholders de Repositorios) ---
 INSTALL_DIR="/opt/aegis"
-REPO_ANK="https://github.com/placeholder/aegis-ank.git"
-REPO_SHELL="https://github.com/placeholder/aegis-shell.git"
+REPO_ANK="https://github.com/Gustavo324234/Aegis-ANK.git"
+REPO_SHELL="https://github.com/Gustavo324234/Aegis-Shell.git"
 NODE_VERSION="20"
 
 # --- Colores para Output ---
@@ -101,6 +101,8 @@ echo "Configurando entorno virtual de Python..."
 python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
+# Forzamos la instalación de las herramientas de compilación legacy
+pip install setuptools wheel packaging
 pip install -r requirements.txt
 deactivate
 
