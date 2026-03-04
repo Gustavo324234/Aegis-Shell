@@ -81,7 +81,11 @@ class AnkClient:
             response = await self.stub.GetSystemStatus(
                 kernel_pb2.Empty(), metadata=metadata
             )
-            return MessageToDict(response, preserving_proto_field_name=True)
+            return MessageToDict(
+                response,
+                preserving_proto_field_name=True,
+                including_default_value_fields=True,
+            )
         except grpc.RpcError as e:
             print(f"gRPC Error in GetSystemStatus: {e}")
             raise
@@ -96,7 +100,11 @@ class AnkClient:
         # Admin initialization doesn't need auth metadata
         try:
             response = await self.stub.InitializeMasterAdmin(request)
-            return MessageToDict(response, preserving_proto_field_name=True)
+            return MessageToDict(
+                response,
+                preserving_proto_field_name=True,
+                including_default_value_fields=True,
+            )
         except grpc.RpcError as e:
             print(f"gRPC Error in InitializeMasterAdmin: {e}")
             raise
@@ -113,7 +121,11 @@ class AnkClient:
 
         try:
             response = await self.stub.CreateTenant(request, metadata=metadata)
-            return MessageToDict(response, preserving_proto_field_name=True)
+            return MessageToDict(
+                response,
+                preserving_proto_field_name=True,
+                including_default_value_fields=True,
+            )
         except grpc.RpcError as e:
             print(f"gRPC Error in CreateTenant: {e}")
             raise
@@ -135,7 +147,7 @@ class AnkClient:
         metadata = self._get_metadata(admin_tenant_id, admin_session_key)
 
         try:
-            response = await self.stub.ResetTenantPassword(request, metadata=metadata)
+            await self.stub.ResetTenantPassword(request, metadata=metadata)
             return True
         except grpc.RpcError as e:
             print(f"gRPC Error in ResetTenantPassword: {e}")
