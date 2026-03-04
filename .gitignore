@@ -67,4 +67,6 @@ citadel_key
 .agents/
 .gemini/
 .agent/
-.agents/
+
+# Project Tracking
+TICKETS.md
