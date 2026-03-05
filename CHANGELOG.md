@@ -1,5 +1,12 @@
 # CHANGELOG: Aegis Shell
 
+### [SH-110] DevTools: Aegis Code Bundler - 2026-03-05
+- 📦 Creado workflow de **GitHub Actions** (`aegis-shell-code-bundler.yml`) para empaquetar el código fuente relevante.
+- 📄 Salida automática a `AegisShellCode.txt` incluyendo lógica de **BFF**, componentes de **UI**, **Protocols** y documentación.
+- 🛡️ Implementado filtrado inteligente para excluir archivos generados (`pb2.py`), binarios y dependencias (`node_modules`).
+- 🚀 Soporte para ejecución manual (`workflow_dispatch`) y automática en `push` a `main`.
+
+
 ### [SH-109] Identity & Access Management - 2026-03-04
 - 🛠️ Interfaz actualizada con pantalla de `AdminSetupScreen` para la configuración inicial del enclave (Zero-Knowledge mode).
 - 🧑‍💻 Añadido el `AdminDashboard` para que el Master Admin pueda "Forjar nuevos Tenants" generando conexiones segregadas a puertos y contraseñas temporales.

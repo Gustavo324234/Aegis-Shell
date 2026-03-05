@@ -21,6 +21,8 @@
     *   *Completado:* Implementación de reglas de exclusión para proteger secretos, claves y artefactos de compilación.
 *   **[SH-109] Identity & Access Management (Admin Dashboard)**
     *   *Completado:* Sistema de inicialización Zero-Knowledge, generador de enclaves (Tenants) por puerto y rotación forzada de contraseñas.
+*   **[SH-110] DevTools: Aegis Code Bundler (GitHub Actions)**
+    *   *Completado:* Workflow de GitHub Actions para empaquetar el código fuente relevante en un único archivo de texto para análisis LLM.
 
 ## 🟦 IN PROGRESS
 *   (All current core tickets completed)

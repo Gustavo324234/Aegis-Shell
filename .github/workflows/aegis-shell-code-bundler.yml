@@ -1,0 +1,67 @@
+name: Bundle Code for AI
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate AegisShellCode.txt
+        run: |
+          cat <<EOF > AegisShellCode.txt
+          ================================================================
+          AEGIS SHELL CODE BUNDLE - $(date)
+          ================================================================
+          EOF
+
+          # Root documentation
+          files=( "README.md" "CHANGELOG.md" "RELEASE_NOTES.md" "SHELL_ARCHITECTURE.md" "TICKETS.md" "install_aegis.sh" ".gitignore" ".gitattributes" )
+          for f in "${files[@]}"; do
+            if [ -f "$f" ]; then
+              echo -e "\n================================================================\nFILE: $f\n================================================================" >> AegisShellCode.txt
+              cat "$f" >> AegisShellCode.txt
+            fi
+          done
+
+          # BFF (Excluding generated files and environments)
+          if [ -d "bff" ]; then
+            find bff -maxdepth 2 -type f \( -name "*.py" -o -name "*.txt" \) ! -name "*pb2*" ! -path "*/__pycache__/*" | while read -r f; do
+              echo -e "\n================================================================\nFILE: $f\n================================================================" >> AegisShellCode.txt
+              cat "$f" >> AegisShellCode.txt
+            done
+          fi
+
+          # UI Source and config
+          if [ -d "ui" ]; then
+            find ui/src -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.css" -o -name "*.json" -o -name "*.html" -o -name "*.js" -o -name "*.svg" \) | while read -r f; do
+              echo -e "\n================================================================\nFILE: $f\n================================================================" >> AegisShellCode.txt
+              cat "$f" >> AegisShellCode.txt
+            done
+            
+            ui_configs=( "ui/package.json" "ui/tsconfig.json" "ui/vite.config.ts" "ui/tailwind.config.ts" "ui/postcss.config.js" "ui/index.html" )
+            for f in "${ui_configs[@]}"; do
+              if [ -f "$f" ]; then
+                echo -e "\n================================================================\nFILE: $f\n================================================================" >> AegisShellCode.txt
+                cat "$f" >> AegisShellCode.txt
+              fi
+            done
+          fi
+
+          # Protocol (Protobuf definitions)
+          if [ -d "protocol" ]; then
+            find protocol -name "*.proto" | while read -r f; do
+              echo -e "\n================================================================\nFILE: $f\n================================================================" >> AegisShellCode.txt
+              cat "$f" >> AegisShellCode.txt
+            done
+          fi
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AegisShellCode
+          path: AegisShellCode.txt
