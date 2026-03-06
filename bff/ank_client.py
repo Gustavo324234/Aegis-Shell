@@ -1,15 +1,19 @@
+import os
 import grpc
 import grpc.aio
 from google.protobuf.json_format import MessageToDict
 import kernel_pb2
 import kernel_pb2_grpc
+import siren_pb2
+import siren_pb2_grpc
 
 
 class AnkClient:
-    def __init__(self, target="localhost:50051"):
-        self.target = target
+    def __init__(self, target=None):
+        self.target = target or os.environ.get("ANK_TARGET", "localhost:50051")
         self.channel = None
         self.stub = None
+        self.siren_stub = None
 
     async def __aenter__(self):
         self.channel = grpc.aio.insecure_channel(self.target)
@@ -156,3 +160,33 @@ class AnkClient:
         except grpc.RpcError as e:
             print(f"gRPC Error in ResetTenantPassword: {e}")
             raise
+
+    async def siren_stream(self, tenant_id: str, session_key: str, chunk_generator):
+        """
+        Bi-directional stream for audio processing (Siren Protocol).
+        Passes a generator to gRPC and yields events back to the caller.
+        """
+        if not self.siren_stub:
+            if not self.channel:
+                self.channel = grpc.aio.insecure_channel(self.target)
+            self.siren_stub = siren_pb2_grpc.SirenServiceStub(self.channel)
+
+        metadata = self._get_metadata(tenant_id, session_key)
+
+        try:
+            # Note: In gRPC Python aio, calling a stream-stream returns a call object
+            # that is an async iterator for the response stream.
+            call = self.siren_stub.SirenStream(chunk_generator, metadata=metadata)
+            async for event in call:
+                yield MessageToDict(event, preserving_proto_field_name=True)
+        except grpc.RpcError as e:
+            print(f"gRPC Error in SirenStream: {e}")
+            raise
+        finally:
+            # SRE Safety: Ensure the gRPC call is cancelled if the consumer stops
+            # this prevents "zombie" streams in the Kernel.
+            try:
+                if not call.done():
+                    call.cancel()
+            except Exception:
+                pass

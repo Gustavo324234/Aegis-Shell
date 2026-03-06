@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from ank_client import AnkClient
 import uvicorn
 import grpc
+import siren_pb2
 
 app = FastAPI(title="Aegis Shell BFF", version="0.1.0")
 
@@ -206,47 +207,85 @@ async def websocket_chat_endpoint(
 
     try:
         while True:
-            # Recibir mensaje del Frontend (ej. un prompt de usuario)
+            # Recibir mensaje del Frontend (ej. un prompt de usuario o un comando 'watch')
             data = await websocket.receive_json()
-            prompt = data.get("prompt")
+            action = data.get("action", "submit")
 
-            if not prompt:
-                await websocket.send_json(
-                    {"event": "error", "data": "Empty prompt received"}
-                )
-                continue
+            if action == "watch":
+                pid = data.get("pid")
+                if not pid:
+                    await websocket.send_json(
+                        {"event": "error", "data": "Missing pid for watch action"}
+                    )
+                    continue
 
-            # 1. Enviar el TaskRequest al Kernel (ANK)
-            await websocket.send_json(
-                {"event": "status", "data": "Submitting task to ANK..."}
-            )
-
-            try:
-                pid = await client.submit_task(prompt, tenant_id, session_key)
                 await websocket.send_json(
                     {
                         "event": "status",
-                        "data": f"Task accepted. PID: {pid}",
+                        "data": f"Watching Task PID: {pid}",
                         "pid": pid,
                     }
                 )
 
-                # 2. Suscribirse al stream de eventos del proceso
-                async for event in client.watch_task(pid, tenant_id, session_key):
-                    # Retransmitir cada evento del Kernel (Thought, Output, Syscall) al UI
-                    await websocket.send_json({"event": "kernel_event", "data": event})
+                try:
+                    async for event in client.watch_task(pid, tenant_id, session_key):
+                        await websocket.send_json(
+                            {"event": "kernel_event", "data": event}
+                        )
 
-                    # Si el evento indica que el proceso terminó, salimos del loop de watch
-                    # Nota: El objeto 'event' procesado por AnkClient es el dict de TaskEvent
-                    if "status_update" in event:
-                        state = event["status_update"].get("state")
-                        if state in ["STATE_COMPLETED", "STATE_TERMINATED"]:
-                            break
+                        if "status_update" in event:
+                            state = event["status_update"].get("state")
+                            if state in ["STATE_COMPLETED", "STATE_TERMINATED"]:
+                                break
+                except Exception as e:
+                    await websocket.send_json(
+                        {
+                            "event": "error",
+                            "data": f"Kernel communication error: {str(e)}",
+                        }
+                    )
 
-            except Exception as e:
+            else:
+                prompt = data.get("prompt")
+                if not prompt:
+                    await websocket.send_json(
+                        {"event": "error", "data": "Empty prompt received"}
+                    )
+                    continue
+
+                # 1. Enviar el TaskRequest al Kernel (ANK)
                 await websocket.send_json(
-                    {"event": "error", "data": f"Kernel communication error: {str(e)}"}
+                    {"event": "status", "data": "Submitting task to ANK..."}
                 )
+
+                try:
+                    pid = await client.submit_task(prompt, tenant_id, session_key)
+                    await websocket.send_json(
+                        {
+                            "event": "status",
+                            "data": f"Task accepted. PID: {pid}",
+                            "pid": pid,
+                        }
+                    )
+
+                    # 2. Suscribirse al stream de eventos del proceso
+                    async for event in client.watch_task(pid, tenant_id, session_key):
+                        await websocket.send_json(
+                            {"event": "kernel_event", "data": event}
+                        )
+
+                        if "status_update" in event:
+                            state = event["status_update"].get("state")
+                            if state in ["STATE_COMPLETED", "STATE_TERMINATED"]:
+                                break
+
+                except Exception as e:
+                    await websocket.send_json(
+                        {
+                            "event": "error",
+                            "data": f"Kernel communication error: {str(e)}",
+                        }
+                    )
 
     except WebSocketDisconnect:
         print(f"Client disconnected: {tenant_id}")
@@ -254,6 +293,71 @@ async def websocket_chat_endpoint(
         print(f"BFF Error: {e}")
     finally:
         pass
+
+
+@app.websocket("/ws/siren/{tenant_id}")
+async def websocket_siren_endpoint(
+    websocket: WebSocket, tenant_id: str, session_key: str = Query(...)
+):
+    """
+    Siren Protocol Bridge: Bi-directional Audio Streaming.
+    Passthrough binary pipe from WS to gRPC.
+    """
+    await websocket.accept()
+    client = AnkClient()
+
+    # 1. Citadel Security Handshake
+    try:
+        await client.get_system_status(tenant_id, session_key)
+    except grpc.RpcError as e:
+        if e.code() == grpc.StatusCode.UNAUTHENTICATED:
+            await websocket.send_json({"event": "error", "data": "Siren Auth Failed"})
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
+
+    # 2. Async Generator (WS -> gRPC)
+    async def audio_chunk_generator():
+        seq = 0
+        try:
+            while True:
+                # El frontend envía chunks de audio binarios
+                data = await websocket.receive_bytes()
+                seq += 1
+                yield siren_pb2.AudioChunk(
+                    sequence_number=seq,
+                    data=data,
+                    format="pcm_16khz_16bit",  # Default standard para Aegis
+                )
+        except WebSocketDisconnect:
+            # La desconexión del WS cerrará el generador y cancelará el gRPC
+            print(f"Siren Stream: WebSocket closed for {tenant_id}")
+        except Exception as e:
+            print(f"Siren Generator Error: {e}")
+
+    # 3. Stream Controller (Pipe execution)
+    try:
+        # Iniciamos el stream bi-direccional.
+        # Python gRPC asincrónico consumirá audio_chunk_generator concurrentemente.
+        async for event in client.siren_stream(
+            tenant_id, session_key, audio_chunk_generator()
+        ):
+            # Retransmitimos eventos del Kernel al Frontend vía WS
+            await websocket.send_json({"event": "siren_event", "data": event})
+
+    except grpc.RpcError as e:
+        # SRE Focus: Manejo de errores de gRPC (Ej: Kernel saturado o caído)
+        print(f"Siren gRPC Error: {e.code()} - {e.details()}")
+        if e.code() == grpc.StatusCode.RESOURCE_EXHAUSTED:
+            await websocket.send_json({"error": "Kernel Overloaded"})
+        else:
+            await websocket.send_json({"error": f"Kernel Stream Error: {e.code()}"})
+    except Exception as e:
+        print(f"Siren Pipe Error: {e}")
+    finally:
+        # El generador y el stream gRPC se limpian automáticamente
+        # al salir del bucle 'async for' o al cerrarse el WebSocket.
+        if websocket.client_state.name != "DISCONNECTED":
+            await websocket.close()
 
 
 # --- SPA Serving Logic (Production) ---

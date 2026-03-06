@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Terminal, Settings, AlertCircle, Cpu } from 'lucide-react';
+import { Send, Terminal, Settings, AlertCircle, Cpu, Mic, MicOff } from 'lucide-react';
 import { useAegisStore, Message } from '../store/useAegisStore';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -20,6 +20,8 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
         disconnected: { color: 'bg-red-500', label: 'Offline' },
         connecting: { color: 'bg-yellow-500 animate-bounce', label: 'Linking' },
         error: { color: 'bg-red-600 shadow-[0_0_10px_rgba(255,0,0,0.5)]', label: 'Kernel Panic' },
+        listening: { color: 'bg-blue-500 animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.8)]', label: 'Listening' },
+        transcribing: { color: 'bg-pink-500 animate-pulse shadow-[0_0_10px_rgba(236,72,153,0.8)]', label: 'Transcribing' },
     };
 
     const current = config[status] || config.disconnected;
@@ -91,10 +93,11 @@ const MessageItem: React.FC<{ message: Message }> = ({ message }) => {
 };
 
 const ChatTerminal: React.FC = () => {
-    const { messages, sendMessage, status } = useAegisStore();
+    const { messages, sendMessage, status, isRecording, startSirenStream, stopSirenStream } = useAegisStore();
     const scrollRef = useRef<HTMLDivElement>(null);
     const isAtBottom = useRef(true);
     const [input, setInput] = useState('');
+    const [voiceError, setVoiceError] = useState<string | null>(null);
 
     const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
         if (scrollRef.current) {
@@ -137,6 +140,21 @@ const ChatTerminal: React.FC = () => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSend();
+        }
+    };
+
+    const handleToggleMic = async () => {
+        if (isRecording) {
+            stopSirenStream();
+        } else {
+            try {
+                setVoiceError(null);
+                await startSirenStream();
+            } catch (err: any) {
+                console.error("🎤 Mic Toggle Error:", err);
+                setVoiceError(err.name === 'NotAllowedError' ? 'Microphone access denied' : 'Hardware error');
+                setTimeout(() => setVoiceError(null), 5000);
+            }
         }
     };
 
@@ -186,6 +204,16 @@ const ChatTerminal: React.FC = () => {
 
                 {/* Omnibox / Input Bar */}
                 <div className="p-6 bg-gradient-to-t from-black via-black/90 to-transparent">
+                    {voiceError && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="max-w-4xl mx-auto mb-2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-2 text-red-500 text-xs font-mono"
+                        >
+                            <AlertCircle className="w-3 h-3" />
+                            <span>Siren Error: {voiceError}</span>
+                        </motion.div>
+                    )}
                     <div className="max-w-4xl mx-auto relative">
                         <div className="glass rounded-xl border border-white/10 flex items-end p-2 gap-2 focus-within:border-aegis-cyan/30 transition-all shadow-2xl">
                             <textarea
@@ -196,6 +224,20 @@ const ChatTerminal: React.FC = () => {
                                 className="w-full bg-transparent border-none focus:ring-0 text-sm py-2 px-3 resize-none max-h-32 min-h-[40px] font-mono placeholder:text-white/20"
                                 rows={1}
                             />
+
+                            <button
+                                onClick={handleToggleMic}
+                                className={cn(
+                                    "p-2 rounded-lg transition-all",
+                                    isRecording
+                                        ? "bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-pulse"
+                                        : "bg-white/5 text-white/40 hover:text-white hover:bg-white/10"
+                                )}
+                                title={isRecording ? "Stop Listening" : "Start Voice Interaction"}
+                            >
+                                {isRecording ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+                            </button>
+
                             <button
                                 onClick={handleSend}
                                 disabled={!input.trim() || status === 'thinking'}

@@ -1,7 +1,8 @@
 import { create } from 'zustand';
+import { ttsPlayer } from '../audio/TTSPlayer';
 
 export type MessageType = 'text' | 'thought' | 'system' | 'error';
-export type SystemStatus = 'disconnected' | 'connecting' | 'idle' | 'thinking' | 'executing_syscall' | 'error';
+export type SystemStatus = 'disconnected' | 'connecting' | 'idle' | 'thinking' | 'executing_syscall' | 'error' | 'listening' | 'transcribing';
 
 export interface Message {
     id: string;
@@ -31,6 +32,8 @@ interface AegisState {
     systemState: 'STATE_INITIALIZING' | 'STATE_OPERATIONAL' | 'UNKNOWN';
     tenantId: string | null;
     sessionKey: string | null;
+    isRecording: boolean;
+    sirenSocket: WebSocket | null;
 
     // Actions
     connect: (tenantId: string, sessionKey: string) => void;
@@ -44,6 +47,8 @@ interface AegisState {
     setAuth: (tenantId: string, sessionKey: string) => void;
     authenticate: (tenantId: string, passphrase: string) => Promise<boolean>;
     logout: () => void;
+    startSirenStream: () => Promise<void>;
+    stopSirenStream: () => void;
 }
 
 let telemetryInterval: number | null = null;
@@ -65,6 +70,8 @@ export const useAegisStore = create<AegisState>((set, get) => ({
     systemState: 'UNKNOWN',
     tenantId: null,
     sessionKey: null,
+    isRecording: false,
+    sirenSocket: null,
 
     startTelemetryPolling: (tenantId: string) => {
         if (telemetryInterval) clearInterval(telemetryInterval);
@@ -185,6 +192,9 @@ export const useAegisStore = create<AegisState>((set, get) => ({
         const { socket, messages } = get();
         if (!socket || socket.readyState !== WebSocket.OPEN) return;
 
+        // Initialize TTS to bypass Autoplay Policy on user interaction
+        ttsPlayer.initialize();
+
         // Add user message to UI immediately
         const userMsg: Message = {
             id: `user-${Date.now()}`,
@@ -282,5 +292,154 @@ export const useAegisStore = create<AegisState>((set, get) => ({
             messages: []
         });
         if (telemetryInterval) clearInterval(telemetryInterval);
+    },
+
+    startSirenStream: async () => {
+        const { tenantId, sessionKey, isRecording } = get();
+        if (isRecording || !tenantId || !sessionKey) return;
+
+        try {
+            // Initialize TTS to bypass Autoplay Policy
+            await ttsPlayer.initialize();
+
+            // 1. Iniciar Microfono
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    sampleRate: 16000,
+                    channelCount: 1,
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                }
+            });
+
+            // 2. Setup Audio Context (Force 16kHz for Kernel)
+            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+            const ctx = new AudioCtx({ sampleRate: 16000 });
+            const source = ctx.createMediaStreamSource(stream);
+            const scriptNode = ctx.createScriptProcessor(4096, 1, 1);
+
+            // 3. Setup Dedicated WebSocket
+            const wsUrl = `ws://${window.location.hostname}:8000/ws/siren/${tenantId}?session_key=${sessionKey}`;
+            const sirenWs = new WebSocket(wsUrl);
+            sirenWs.binaryType = 'arraybuffer';
+
+            sirenWs.onopen = () => {
+                console.log('📡 Siren Stream: Pipe established');
+                set({ isRecording: true, sirenSocket: sirenWs });
+            };
+
+            sirenWs.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+                if (msg.event === 'siren_event') {
+                    const sirenEvent = msg.data;
+                    console.log(`🎙️ Siren Event [${sirenEvent.event_type}]:`, sirenEvent.message);
+
+                    if (sirenEvent.tts_audio_chunk) {
+                        try {
+                            ttsPlayer.playChunk(sirenEvent.tts_audio_chunk, sirenEvent.sample_rate || 22050);
+                        } catch (e) {
+                            console.error("TTS Playback error:", e);
+                        }
+                    }
+
+                    if (sirenEvent.event_type === 'VAD_START') {
+                        set({ status: 'listening' });
+                    } else if (sirenEvent.event_type === 'STT_START') {
+                        set({ status: 'transcribing' });
+                    } else if (sirenEvent.event_type === 'STT_DONE') {
+                        try {
+                            const payload = JSON.parse(sirenEvent.message);
+                            const transcript = payload.transcript;
+                            const pid = payload.pid;
+
+                            // 1. Add transcript to history
+                            const userMsg: Message = {
+                                id: `voice-${Date.now()}`,
+                                role: 'user',
+                                content: transcript,
+                                type: 'text',
+                                timestamp: Date.now()
+                            };
+
+                            set((state) => ({
+                                messages: [...state.messages, userMsg],
+                                activePid: pid,
+                                status: 'thinking'
+                            }));
+
+                            // 2. Send 'watch' command to main chat websocket
+                            const chatSocket = get().socket;
+                            if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                                chatSocket.send(JSON.stringify({ action: "watch", pid: pid }));
+                            }
+                        } catch (e) {
+                            console.error("Failed to parse STT_DONE payload", e);
+                            set({ status: 'idle' });
+                        }
+                    } else if (sirenEvent.event_type === 'STT_ERROR') {
+                        set({ status: 'error' });
+                    }
+                }
+                else if (msg.error) {
+                    console.error('❌ Siren Kernel Error:', msg.error);
+                    get().stopSirenStream();
+                }
+            };
+
+            sirenWs.onclose = () => {
+                console.log('📡 Siren Stream: Pipe closed');
+                get().stopSirenStream();
+            };
+
+            // 4. Processing Loop (Float32 -> Int16 PCM)
+            scriptNode.onaudioprocess = (audioEvent) => {
+                if (sirenWs.readyState !== WebSocket.OPEN) return;
+
+                const inputData = audioEvent.inputBuffer.getChannelData(0);
+                const pcmBuffer = new Int16Array(inputData.length);
+
+                // Conversion optimizada: SRE Focus
+                for (let i = 0; i < inputData.length; i++) {
+                    const s = Math.max(-1, Math.min(1, inputData[i]));
+                    pcmBuffer[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                }
+
+                sirenWs.send(pcmBuffer.buffer);
+            };
+
+            source.connect(scriptNode);
+            scriptNode.connect(ctx.destination);
+
+            // Guardar referencias para limpieza manual (fuera del state para evitar re-renders masivos)
+            (window as any)._aegis_audio_stream = stream;
+            (window as any)._aegis_audio_ctx = ctx;
+            (window as any)._aegis_audio_node = scriptNode;
+
+        } catch (error) {
+            console.error('🎤 Siren Capture Error:', error);
+            set({ isRecording: false });
+            throw error; // Let the UI handle the error (toast/alert)
+        }
+    },
+
+    stopSirenStream: () => {
+        const { sirenSocket } = get();
+
+        // 1. Close Socket
+        if (sirenSocket) {
+            sirenSocket.close();
+            set({ sirenSocket: null });
+        }
+
+        // 2. Stop Audio Pipeline
+        const stream = (window as any)._aegis_audio_stream as MediaStream;
+        const ctx = (window as any)._aegis_audio_ctx as AudioContext;
+        const node = (window as any)._aegis_audio_node as ScriptProcessorNode;
+
+        if (stream) stream.getTracks().forEach(track => track.stop());
+        if (node) node.disconnect();
+        if (ctx) ctx.close();
+
+        set({ isRecording: false });
     }
 }));

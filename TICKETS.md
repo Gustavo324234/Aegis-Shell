@@ -15,6 +15,12 @@
     *   *Completado:* Sistema de autenticación de tres capas (React/SHA-256 -> FastAPI/Pydantic -> Rust/gRPC) con validación pre-flight.
 *   **[SH-106] Hotfix: UI & BFF Stability**
     *   *Completado:* Corrección de errores de sintaxis en ChatTerminal, limpieza de imports y manejo de excepciones en AnkClient.
+*   **[SH-121] Siren Protocol: WebSocket Bridge (Capacidad Auditiva)**
+    *   *Completado:* Implementación de pasarela asíncrona bi-direccional gRPC/WebSocket con control de backpressure y cancelación SRE.
+*   **[SH-122] Siren Event Handling & UI Orchestration**
+    *   *Completado:* Orquestación de telemetría de voz (VAD_START, STT_DONE), inyección de transcripción al chat y enrutamiento del BFF para acciones `watch`.
+*   **[SH-120] Siren Web API: Frontend Audio Capture (Capacidad Auditiva)**
+    *   *Completado:* Captura de audio Raw PCM 16kHz en el navegador, conversión Float32 a Int16 y streaming vía WebSocket dedicado.
 *   **[SH-107] Production Readiness: BFF Static Serving**
     *   *Completado:* Soporte para servir el build de React (`dist`) desde FastAPI y enrutamiento SPA (catch-all).
 *   **[SH-108] Security: Repository Protection (.gitignore)**
@@ -31,4 +37,6 @@
 
 ### EPIC 3: Autenticación
 *   (Completar EPIC 1 y 2 antes de añadir más tareas)
-    
+
+### Notas Técnicas Cross-Repo
+*   📝 **NOTA TÉCNICA (Siren)**: El contrato gRPC del `SirenService` ha sido desplegado y está operativo en el Kernel (ANK v1.2.0). Esto habilita oficialmente el inicio de los tickets **[SH-120]** y **[SH-121]** relacionados con la Capacidad Auditiva.

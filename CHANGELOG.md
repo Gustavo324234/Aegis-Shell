@@ -1,5 +1,32 @@
 # CHANGELOG: Aegis Shell
 
+### [SH-123] Gapless TTS Playback (Web Audio API) - 2026-03-06
+- 🔊 **Voice Synthesis**: Creación de `TTSPlayer.ts`, una utilidad pura de Web Audio API para reproducción ininterrumpida de los buffers generados por el Kernel.
+- 🧮 **Float32 Direct Memory**: Implementado decoding ultra-rápido en frontend (Base64 -> Uint8Array -> Int16Array -> Float32Array) para cumplir estigmas del Kernel.
+- ⏱️ **Jitter Resilience**: Integrado el patrón de "*Mathematical Scheduling*" para re-sincronizar el reloj de reproducción `nextStartTime` cuando la red introduce latencia, añadiendo un safe-buffer de 50ms.
+- 🔓 **Autoplay Unlocker**: Sistema automatizado dentro del store Zustand (`useAegisStore.ts`) para reactivar silenciosamente el `AudioContext` en el primer evento natural del usuario (enviar chat o activar micrófono), saltando los bloqueos silentes de los navegadores.
+
+### [SH-122] Siren Event Handling & UI Orchestration - 2026-03-06
+- 📡 **BFF Chat WebSocket**: Añadido soporte para comandos de acción específicos (`submit` y `watch`).
+- 🤖 **Enrutamiento Asíncrono de Tareas**: La UI ahora puede suscribirse a un PID existente generado vía STT (Siren), integrando la voz de un extremo al otro como comando reactivo.
+- 🎨 **Visual State (The Orb)**: Actualizado Zustand (`useAegisStore.ts`) para interpretar la telemetría de Siren (`VAD_START`, `STT_START`) y cambiar el estado del terminal (`listening`, `transcribing`).
+- 📝 **STT Auto-Injection**: Al recibir `STT_DONE`, la terminal inyecta la transcripción de Whisper en el historial del usuario como si hubiera sido escrita y comienza la suscripción al PID resultante.
+
+### [SH-120] Siren Web API: Frontend Audio Capture - 2026-03-05
+- 🎤 Implementada captura de audio **Raw PCM (16kHz, 16-bit, Mono)** directamente desde el navegador.
+- 🧪 Añadida lógica de conversión optimizada de `Float32` a `Int16` para cumplir con los requisitos del Kernel.
+- 📡 Integración con **Zustand**: Nuevo estado `isRecording` y orquestación automática de WebSockets dedicados para audio.
+- 🎨 UI mejorada: Botón de micrófono con feedback visual (animaciones de pulso) y manejo elegante de permisos de hardware.
+- 🛡️ **SRE Resilience**: Captura de errores de `getUserMedia` y limpieza automática del `AudioContext` para prevenir fugas de memoria.
+
+### [SH-121] Siren Protocol: BFF-Kernel Audio Bridge - 2026-03-05
+- 📡 Implementado el **Tubo de Pasarela (Dumb Pipe)** para el protocolo Siren, permitiendo streaming de audio bidireccional de baja latencia (<5ms).
+- 🔌 Creado el endpoint WebSocket `/ws/siren/{tenant_id}` para la ingesta de audio binario desde el navegador.
+- 🏗️ Extendido `AnkClient` con soporte para el `SirenService` de gRPC, utilizando generadores asíncronos para el manejo eficiente del backpressure.
+- 🛡️ **SRE Resilience**: Implementado sistema de cancelación cruzada (`call.cancel()`) para liberar recursos del Kernel ante desconexiones accidentales o cierres de pestaña.
+- 📦 Generados bindings de Python para `siren.proto` y sincronizados con la definición oficial del Kernel (ANK v1.2.0).
+- 🧪 Manejo robusto de excepciones gRPC, incluyendo retransmisión de estados de saturación (`RESOURCE_EXHAUSTED`) hacia la UI.
+
 ### [SH-110] DevTools: Aegis Code Bundler - 2026-03-05
 - 📦 Creado workflow de **GitHub Actions** (`aegis-shell-code-bundler.yml`) para empaquetar el código fuente relevante.
 - 📄 Salida automática a `AegisShellCode.txt` incluyendo lógica de **BFF**, componentes de **UI**, **Protocols** y documentación.
