@@ -1,5 +1,11 @@
 # CHANGELOG: Aegis Shell
 
+### [SH-124] SRE Bootstrap UX Redesign - 2026-03-06
+- 🛡️ **Zero-Trust UX**: Rediseño de la pantalla `AdminSetupScreen` para erradicar la confusión con una pantalla de login.
+- 🎨 **Banner Informativo**: Inyectada advertencia de seguridad militar (estilo alerta SRE) denotando un sistema limpio.
+- 📝 **Copywriting Directo**: Actualización de los labels ("Crear ID...", "Nueva Contraseña...") y estado explícito de creación en el botón principal ("Forjar Llaves y Bloquear Sistema").
+- ⚡ **Auto-fill Inteligente**: El name input se pre-rellena con `root` asumiendo las mejores prácticas Zero-Trust pero ahorrando clics.
+
 ### [SH-123] Gapless TTS Playback (Web Audio API) - 2026-03-06
 - 🔊 **Voice Synthesis**: Creación de `TTSPlayer.ts`, una utilidad pura de Web Audio API para reproducción ininterrumpida de los buffers generados por el Kernel.
 - 🧮 **Float32 Direct Memory**: Implementado decoding ultra-rápido en frontend (Base64 -> Uint8Array -> Int16Array -> Float32Array) para cumplir estigmas del Kernel.

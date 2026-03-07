@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Shield, Terminal, ChevronRight } from 'lucide-react';
 
 const AdminSetupScreen: React.FC<{ onSetupComplete: () => void }> = ({ onSetupComplete }) => {
-    const [username, setUsername] = useState('');
+    const [username, setUsername] = useState('root');
     const [passphrase, setPassphrase] = useState('');
     const [confirmPassphrase, setConfirmPassphrase] = useState('');
     const [isInitializing, setIsInitializing] = useState(false);
@@ -81,8 +81,8 @@ const AdminSetupScreen: React.FC<{ onSetupComplete: () => void }> = ({ onSetupCo
                             </div>
                         </div>
 
-                        <h1 className="text-2xl font-bold tracking-[0.2em] text-white uppercase mb-1">
-                            AEGIS <span className="text-red-500">BOOTSTRAP</span>
+                        <h1 className="text-2xl font-bold tracking-[0.2em] text-white uppercase mb-1 text-center">
+                            INICIALIZACIÓN <span className="text-red-500">ZERO-TRUST</span>
                         </h1>
                         <div className="flex items-center gap-2">
                             <div className="h-[1px] w-4 bg-red-500/40" />
@@ -93,9 +93,16 @@ const AdminSetupScreen: React.FC<{ onSetupComplete: () => void }> = ({ onSetupCo
                         </div>
                     </div>
 
+                    <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-lg flex items-start gap-3 mb-6">
+                        <Shield className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                        <p className="text-[11px] font-mono text-amber-400/90 leading-relaxed text-left">
+                            <strong className="text-amber-500">Sistema limpio detectado.</strong> Por directiva de seguridad militar, Aegis OS no posee contraseñas por defecto. Forja tu credencial de Master Admin ahora.
+                        </p>
+                    </div>
+
                     <form onSubmit={handleSetup} className="space-y-6">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-mono text-white/40 uppercase ml-1 tracking-widest">Master Admin ID</label>
+                            <label className="text-[10px] font-mono text-white/40 uppercase ml-1 tracking-widest block text-left">Crear ID de Administrador (ej. root)</label>
                             <input
                                 type="text"
                                 value={username}
@@ -107,7 +114,7 @@ const AdminSetupScreen: React.FC<{ onSetupComplete: () => void }> = ({ onSetupCo
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-mono text-white/40 uppercase ml-1 tracking-widest">Master Passphrase</label>
+                            <label className="text-[10px] font-mono text-white/40 uppercase ml-1 tracking-widest block text-left">Nueva Contraseña Maestra</label>
                             <input
                                 type="password"
                                 value={passphrase}
@@ -119,7 +126,7 @@ const AdminSetupScreen: React.FC<{ onSetupComplete: () => void }> = ({ onSetupCo
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-mono text-white/40 uppercase ml-1 tracking-widest">Confirm Passphrase</label>
+                            <label className="text-[10px] font-mono text-white/40 uppercase ml-1 tracking-widest block text-left">Repetir Contraseña</label>
                             <input
                                 type="password"
                                 value={confirmPassphrase}
@@ -159,7 +166,7 @@ const AdminSetupScreen: React.FC<{ onSetupComplete: () => void }> = ({ onSetupCo
                                     </>
                                 ) : (
                                     <>
-                                        <span className="text-xs font-mono font-bold tracking-[0.3em] uppercase text-red-100">Initialize Identity</span>
+                                        <span className="text-[10px] sm:text-xs font-mono font-bold tracking-[0.1em] sm:tracking-[0.2em] uppercase text-red-100">Forjar Llaves y Bloquear Sistema</span>
                                         <ChevronRight className="w-4 h-4 text-red-100 group-hover:translate-x-1 transition-transform" />
                                     </>
                                 )}
