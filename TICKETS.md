@@ -1,6 +1,8 @@
 # 🗺️ Aegis Shell Project Tracking (Kanban)
 
 ## 🟩 DONE
+*   **[SEC-001] Path Traversal in BFF**
+    *   *Completado:* Mitigación de escape de directorio `../` en la validación de archivos estáticos.
 *   **[SH-100] Setup del Workspace (Vite + FastAPI)**
     *   *Completado:* Estructura de carpetas, dependencias base y UI entry screen.
 *   **[SH-101] El Puente gRPC (FastAPI BFF)**

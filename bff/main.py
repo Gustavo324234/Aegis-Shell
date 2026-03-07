@@ -385,7 +385,13 @@ async def serve_spa(full_path: str):
         )
 
     # Intentar servir archivo estático (ej. favicon.ico, manifest.json)
-    file_path = os.path.join(UI_DIST_PATH, full_path)
+    file_path = os.path.abspath(os.path.join(UI_DIST_PATH, full_path))
+    if not file_path.startswith(UI_DIST_PATH):
+        return JSONResponse(
+            status_code=status.HTTP_403_FORBIDDEN,
+            content={"detail": "Forbidden: Path traversal detected."},
+        )
+
     if os.path.isfile(file_path):
         return FileResponse(file_path)
 

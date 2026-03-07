@@ -1,5 +1,8 @@
 # CHANGELOG: Aegis Shell
 
+### Security Patches (Batch 1) - 2026-03-07
+- 🛡️ **[SEC-001] BFF Path Traversal Mitigation**: Refactorizada la función `serve_spa` en `main.py` para utilizar `os.path.abspath` y validar estrictamente que la ruta servida pertenezca a `UI_DIST_PATH`, devolviendo HTTP 403 Forbidden ante intentos de escape (ej. `../`).
+
 ### [SH-124] SRE Bootstrap UX Redesign - 2026-03-06
 - 🛡️ **Zero-Trust UX**: Rediseño de la pantalla `AdminSetupScreen` para erradicar la confusión con una pantalla de login.
 - 🎨 **Banner Informativo**: Inyectada advertencia de seguridad militar (estilo alerta SRE) denotando un sistema limpio.
