@@ -12,11 +12,22 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from ank_client import AnkClient
+from contextlib import asynccontextmanager
 import uvicorn
 import grpc
 import siren_pb2
 
-app = FastAPI(title="Aegis Shell BFF", version="0.1.0")
+ank_global_client = AnkClient()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await ank_global_client.__aenter__()
+    yield
+    await ank_global_client.__aexit__(None, None, None)
+
+
+app = FastAPI(title="Aegis Shell BFF", version="0.1.0", lifespan=lifespan)
 
 
 # Models
@@ -64,7 +75,7 @@ async def login(auth: AuthRequest):
     Identity Provider: Validates credentials by performing a pre-flight
     gRPC call to the Aegis Neural Kernel.
     """
-    client = AnkClient()
+    client = ank_global_client
     try:
         # Intentamos obtener el status del sistema usando las credenciales.
         # Si el Kernel (Rust) las rechaza, lanzará un error de gRPC.
@@ -94,7 +105,7 @@ async def login(auth: AuthRequest):
 
 @app.post("/api/admin/setup")
 async def setup_admin(req: AdminSetupRequest):
-    client = AnkClient()
+    client = ank_global_client
     try:
         response = await client.initialize_master_admin(req.username, req.passphrase)
         return response
@@ -107,7 +118,7 @@ async def setup_admin(req: AdminSetupRequest):
 
 @app.post("/api/admin/tenant")
 async def create_tenant(req: TenantCreateRequest):
-    client = AnkClient()
+    client = ank_global_client
     try:
         response = await client.create_tenant(
             req.username, req.admin_tenant_id, req.admin_session_key
@@ -122,7 +133,7 @@ async def create_tenant(req: TenantCreateRequest):
 
 @app.post("/api/admin/reset_password")
 async def reset_password(req: PasswordResetRequest):
-    client = AnkClient()
+    client = ank_global_client
     try:
         await client.reset_tenant_password(
             req.tenant_id,
@@ -140,7 +151,7 @@ async def reset_password(req: PasswordResetRequest):
 
 @app.get("/api/system/state")
 async def get_public_system_state():
-    client = AnkClient()
+    client = ank_global_client
     try:
         # Call without credentials to check if Kernel is initialized.
         status_data = await client.get_system_status()
@@ -161,7 +172,7 @@ async def get_system_status(tenant_id: str, session_key: str = Query(...)):
     HTTP Poll endpoint for system telemetry.
     Decoupled from chat WebSocket to prevent congestion.
     """
-    client = AnkClient()
+    client = ank_global_client
     try:
         status_data = await client.get_system_status(tenant_id, session_key)
         return status_data
@@ -184,7 +195,7 @@ async def websocket_chat_endpoint(
     """
     await websocket.accept()
 
-    client = AnkClient()
+    client = ank_global_client
 
     # 0. Pre-Handshake: Validate with the Kernel during connection
     try:
@@ -304,7 +315,7 @@ async def websocket_siren_endpoint(
     Passthrough binary pipe from WS to gRPC.
     """
     await websocket.accept()
-    client = AnkClient()
+    client = ank_global_client
 
     # 1. Citadel Security Handshake
     try:
