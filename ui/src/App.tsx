@@ -7,9 +7,10 @@ import LoginScreen from './components/LoginScreen';
 import AdminSetupScreen from './components/AdminSetupScreen';
 import AdminDashboard from './components/AdminDashboard';
 import ForcePasswordChangeScreen from './components/ForcePasswordChangeScreen';
+import EngineSetupWizard from './components/EngineSetupWizard';
 
 function App() {
-    const { status, isAuthenticated, isAdmin, systemState, tenantId, sessionKey, connect, fetchSystemState } = useAegisStore();
+    const { status, isAuthenticated, isAdmin, systemState, tenantId, sessionKey, connect, fetchSystemState, isEngineConfigured } = useAegisStore();
     const [needsPasswordReset, setNeedsPasswordReset] = useState(false);
 
     // Initial system state check
@@ -92,6 +93,16 @@ function App() {
                                 ESTABLISHING RING 0 NEURAL LINK...
                             </p>
                         </div>
+                    </motion.div>
+                ) : !isEngineConfigured ? (
+                    <motion.div
+                        key="engine_setup"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="w-full h-full"
+                    >
+                        <EngineSetupWizard />
                     </motion.div>
                 ) : (
                     <motion.div

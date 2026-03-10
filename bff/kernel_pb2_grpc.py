@@ -71,9 +71,9 @@ class KernelServiceStub(object):
                 request_serializer=kernel__pb2.TenantCreateRequest.SerializeToString,
                 response_deserializer=kernel__pb2.TenantCreateResponse.FromString,
                 _registered_method=True)
-        self.ResetTenantPassword = channel.unary_unary(
-                '/ank.v1.KernelService/ResetTenantPassword',
-                request_serializer=kernel__pb2.PasswordResetRequest.SerializeToString,
+        self.ConfigureEngine = channel.unary_unary(
+                '/ank.v1.KernelService/ConfigureEngine',
+                request_serializer=kernel__pb2.EngineConfigRequest.SerializeToString,
                 response_deserializer=kernel__pb2.Empty.FromString,
                 _registered_method=True)
 
@@ -134,8 +134,9 @@ class KernelServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def ResetTenantPassword(self, request, context):
+    def ConfigureEngine(self, request, context):
         """Forces a password reset for a given tenant
+        Configures the Cognitive Engine dynamically
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -179,9 +180,9 @@ def add_KernelServiceServicer_to_server(servicer, server):
                     request_deserializer=kernel__pb2.TenantCreateRequest.FromString,
                     response_serializer=kernel__pb2.TenantCreateResponse.SerializeToString,
             ),
-            'ResetTenantPassword': grpc.unary_unary_rpc_method_handler(
-                    servicer.ResetTenantPassword,
-                    request_deserializer=kernel__pb2.PasswordResetRequest.FromString,
+            'ConfigureEngine': grpc.unary_unary_rpc_method_handler(
+                    servicer.ConfigureEngine,
+                    request_deserializer=kernel__pb2.EngineConfigRequest.FromString,
                     response_serializer=kernel__pb2.Empty.SerializeToString,
             ),
     }
@@ -387,7 +388,7 @@ class KernelService(object):
             _registered_method=True)
 
     @staticmethod
-    def ResetTenantPassword(request,
+    def ConfigureEngine(request,
             target,
             options=(),
             channel_credentials=None,
@@ -400,8 +401,8 @@ class KernelService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/ank.v1.KernelService/ResetTenantPassword',
-            kernel__pb2.PasswordResetRequest.SerializeToString,
+            '/ank.v1.KernelService/ConfigureEngine',
+            kernel__pb2.EngineConfigRequest.SerializeToString,
             kernel__pb2.Empty.FromString,
             options,
             channel_credentials,

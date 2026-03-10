@@ -7,6 +7,9 @@ from fastapi import (
     Query,
     HTTPException,
     status,
+    File,
+    UploadFile,
+    Form,
 )
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -14,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from ank_client import AnkClient
 from contextlib import asynccontextmanager
 import uvicorn
+import shutil
 import grpc
 import siren_pb2
 
@@ -52,6 +56,14 @@ class PasswordResetRequest(BaseModel):
     admin_tenant_id: str
     admin_session_key: str
     new_passphrase: str
+
+
+class EngineConfig(BaseModel):
+    tenant_id: str
+    session_key: str
+    api_url: str
+    model_name: str
+    api_key: str
 
 
 # Configurar CORS para desarrollo
@@ -147,6 +159,83 @@ async def reset_password(req: PasswordResetRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Reset Password Error: {e.details()}",
         )
+
+
+@app.post("/api/engine/configure")
+async def configure_engine(req: EngineConfig):
+    """
+    Configures the Dynamic Engine per tenant via Citadel authentication.
+    """
+    client = ank_global_client
+    try:
+        await client.configure_engine(
+            req.tenant_id, req.session_key, req.api_url, req.model_name, req.api_key
+        )
+        return {"success": True, "message": "Cognitive Engine dynamically configured."}
+    except grpc.RpcError as e:
+        if e.code() == grpc.StatusCode.UNAUTHENTICATED:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Citadel Protocol: Access Denied.",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Engine Configuration Error: {e.details()}",
+        )
+
+
+@app.post("/api/workspace/upload")
+async def upload_file(
+    tenant_id: str = Form(...),
+    session_key: str = Form(...),
+    file: UploadFile = File(...),
+):
+    """
+    Ingests files to the Kernel's Workspace.
+    Validates with Citadel before saving to local disk.
+    """
+    client = ank_global_client
+    try:
+        await client.get_system_status(tenant_id, session_key)
+    except grpc.RpcError as e:
+        if e.code() == grpc.StatusCode.UNAUTHENTICATED:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Citadel Protocol: Access Denied.",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Kernel Check Error: {str(e.details())}",
+        )
+
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Missing filename")
+
+    safe_filename = os.path.basename(file.filename)
+    if not safe_filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    base_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "users", tenant_id, "workspace")
+    )
+    os.makedirs(base_dir, exist_ok=True)
+
+    file_path = os.path.join(base_dir, safe_filename)
+
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to write file: {str(e)}",
+        )
+
+    return {
+        "status": "success",
+        "filename": safe_filename,
+        "message": "File injected successfully",
+    }
 
 
 @app.get("/api/system/state")

@@ -1,4 +1,18 @@
-# CHANGELOG: Aegis Shell
+# CHANGELOG:# Aegis Shell - Changelog
+
+## [1.2.1] - Unreleased
+
+### Added
+- **[SH-126] Engine Setup Wizard:**
+  - Dynamic Cognitive Engine configuration from the user interface.
+  - VRAM Telemetry detection to suggest Local vs Cloud Inference.
+  - Zero-Knowledge pass-through to the Kernel via Citadel for `api_url`, `model_name`, and `api_key`.
+
+## [1.2.0] - Zero-Trust Boot & System Audion & Workspace Sync - 2026-03-10
+- 📂 **Zero-Code Upload**: Implementado endpoint POST `/api/workspace/upload` en el BFF con validación estricta de Citadel.
+- 🎨 **UI Integration**: Añadido icono de adjunto (Clip) y soporte Drag & Drop en el ChatTerminal de React.
+- 🧠 **Context Awareness**: El store Zustand ahora inyecta logs de sistema locales para confirmar a la interfaz la recepción exitosa del archivo e informar al operador.
+- 🛡️ **Path Traversal Prevention**: Sanitización de nombres de archivo y enlazado persistente y seguro al workspace segregado del tenant en el contenedor.
 
 ### Security Patches (Batch 1) - 2026-03-07
 - 🛡️ **[SEC-001] BFF Path Traversal Mitigation**: Refactorizada la función `serve_spa` en `main.py` para utilizar `os.path.abspath` y validar estrictamente que la ruta servida pertenezca a `UI_DIST_PATH`, devolviendo HTTP 403 Forbidden ante intentos de escape (ej. `../`).

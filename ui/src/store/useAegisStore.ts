@@ -34,6 +34,7 @@ interface AegisState {
     sessionKey: string | null;
     isRecording: boolean;
     sirenSocket: WebSocket | null;
+    isEngineConfigured: boolean;
 
     // Actions
     connect: (tenantId: string, sessionKey: string) => void;
@@ -42,6 +43,7 @@ interface AegisState {
     appendToken: (msgId: string, token: string, type: MessageType) => void;
     setStatus: (status: SystemStatus) => void;
     clearHistory: () => void;
+    addSystemMessage: (content: string) => void;
     startTelemetryPolling: (tenantId: string) => void;
     fetchSystemState: () => Promise<void>;
     setAuth: (tenantId: string, sessionKey: string) => void;
@@ -49,6 +51,8 @@ interface AegisState {
     logout: () => void;
     startSirenStream: () => Promise<void>;
     stopSirenStream: () => void;
+    configureEngine: (apiUrl: string, model: string, apiKey: string) => Promise<boolean>;
+    setEngineConfigured: (configured: boolean) => void;
 }
 
 let telemetryInterval: number | null = null;
@@ -72,6 +76,7 @@ export const useAegisStore = create<AegisState>((set, get) => ({
     sessionKey: null,
     isRecording: false,
     sirenSocket: null,
+    isEngineConfigured: false,
 
     startTelemetryPolling: (tenantId: string) => {
         if (telemetryInterval) clearInterval(telemetryInterval);
@@ -241,6 +246,17 @@ export const useAegisStore = create<AegisState>((set, get) => ({
     setStatus: (status) => set({ status }),
 
     clearHistory: () => set({ messages: [] }),
+
+    addSystemMessage: (content: string) => {
+        const sysMsg: Message = {
+            id: `sys-${Date.now()}`,
+            role: 'system',
+            content,
+            type: 'system',
+            timestamp: Date.now()
+        };
+        set({ messages: [...get().messages, sysMsg] });
+    },
 
     setAuth: (tenantId, sessionKey) => set({
         tenantId,
@@ -441,5 +457,37 @@ export const useAegisStore = create<AegisState>((set, get) => ({
         if (ctx) ctx.close();
 
         set({ isRecording: false });
+    },
+
+    setEngineConfigured: (configured: boolean) => {
+        set({ isEngineConfigured: configured });
+    },
+
+    configureEngine: async (apiUrl, model, apiKey) => {
+        const { tenantId, sessionKey } = get();
+        if (!tenantId || !sessionKey) return false;
+
+        try {
+            const response = await fetch('/api/engine/configure', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenant_id: tenantId,
+                    session_key: sessionKey,
+                    api_url: apiUrl,
+                    model_name: model,
+                    api_key: apiKey
+                })
+            });
+
+            if (response.ok) {
+                set({ isEngineConfigured: true });
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Engine Setup Error:', error);
+            return false;
+        }
     }
 }));

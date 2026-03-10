@@ -26,7 +26,7 @@ from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__
 from google.protobuf import struct_pb2 as google_dot_protobuf_dot_struct__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0ckernel.proto\x12\x06\x61nk.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\"\xc2\x01\n\x0bTaskRequest\x12\x0e\n\x06prompt\x18\x01 \x01(\t\x12\"\n\x08priority\x18\x02 \x01(\x0e\x32\x10.ank.v1.Priority\x12\'\n\x06policy\x18\x03 \x01(\x0b\x32\x17.ank.v1.ExecutionPolicy\x12\x30\n\x0finitial_context\x18\x04 \x01(\x0b\x32\x17.google.protobuf.Struct\x12\x16\n\ttenant_id\x18\x05 \x01(\tH\x00\x88\x01\x01\x42\x0c\n\n_tenant_id\"\xac\x01\n\x0f\x45xecutionPolicy\x12*\n\x04mode\x18\x01 \x01(\x0e\x32\x1c.ank.v1.ExecutionPolicy.Mode\x12\x1a\n\x12target_model_group\x18\x02 \x01(\t\x12\x13\n\x0bmax_retries\x18\x03 \x01(\r\"<\n\x04Mode\x12\x0f\n\x0bMODE_STRICT\x10\x00\x12\x11\n\rMODE_ADAPTIVE\x10\x01\x12\x10\n\x0cMODE_DRY_RUN\x10\x02\"\xdd\x04\n\x03PCB\x12\x0b\n\x03pid\x18\x01 \x01(\t\x12\x12\n\nparent_pid\x18\x02 \x01(\t\x12#\n\x05state\x18\x03 \x01(\x0e\x32\x14.ank.v1.ProcessState\x12\x14\n\x0cquantum_used\x18\x04 \x01(\r\x12\'\n\x06memory\x18\x05 \x01(\x0b\x32\x17.ank.v1.PCB.MemorySpace\x12\x38\n\x0finlined_context\x18\x06 \x03(\x0b\x32\x1f.ank.v1.PCB.InlinedContextEntry\x12.\n\ncreated_at\x18\x07 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x30\n\x0clast_updated\x18\x08 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x10\n\x08priority\x18\t \x01(\r\x12\x14\n\x0cprocess_name\x18\n \x01(\t\x12\x11\n\ttenant_id\x18\x0b \x01(\t\x12\x13\n\x0bsession_key\x18\x0c \x01(\t\x1a\xad\x01\n\x0bMemorySpace\x12\x1b\n\x13instruction_pointer\x18\x01 \x01(\t\x12\x14\n\x0c\x63ontext_refs\x18\x02 \x03(\t\x12\x39\n\tregisters\x18\x03 \x03(\x0b\x32&.ank.v1.PCB.MemorySpace.RegistersEntry\x1a\x30\n\x0eRegistersEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x35\n\x13InlinedContextEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"X\n\x07Syscall\x12\x0c\n\x04name\x18\x01 \x01(\t\x12*\n\targuments\x18\x02 \x01(\x0b\x32\x17.google.protobuf.Struct\x12\x13\n\x0breturn_type\x18\x03 \x01(\t\"\xd2\x01\n\tTaskEvent\x12\x0b\n\x03pid\x18\x01 \x01(\t\x12-\n\ttimestamp\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x11\n\x07thought\x18\x03 \x01(\tH\x00\x12\"\n\x07syscall\x18\x04 \x01(\x0b\x32\x0f.ank.v1.SyscallH\x00\x12\x10\n\x06output\x18\x05 \x01(\tH\x00\x12$\n\rstatus_update\x18\x06 \x01(\x0b\x32\x0b.ank.v1.PCBH\x00\x12\x0f\n\x05\x65rror\x18\x07 \x01(\tH\x00\x42\t\n\x07payload\"E\n\x10TaskSubscription\x12\x0b\n\x03pid\x18\x01 \x01(\t\x12\x16\n\ttenant_id\x18\x02 \x01(\tH\x00\x88\x01\x01\x42\x0c\n\n_tenant_id\">\n\x0cTaskResponse\x12\x0b\n\x03pid\x18\x01 \x01(\t\x12\x10\n\x08\x61\x63\x63\x65pted\x18\x02 \x01(\x08\x12\x0f\n\x07message\x18\x03 \x01(\t\"-\n\x0bProcessList\x12\x1e\n\tprocesses\x18\x01 \x03(\x0b\x32\x0b.ank.v1.PCB\"\xce\x01\n\x0cSystemStatus\x12\x10\n\x08\x63pu_load\x18\x01 \x01(\x02\x12\x19\n\x11vram_allocated_mb\x18\x02 \x01(\x02\x12\x15\n\rvram_total_mb\x18\x03 \x01(\x02\x12\x17\n\x0ftotal_processes\x18\x04 \x01(\r\x12\x16\n\x0e\x61\x63tive_workers\x18\x05 \x01(\r\x12\x0e\n\x06uptime\x18\x06 \x01(\t\x12\x15\n\rloaded_models\x18\x07 \x03(\t\x12\"\n\x05state\x18\x08 \x01(\x0e\x32\x13.ank.v1.SystemState\"9\n\x11\x41\x64minSetupRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x12\n\npassphrase\x18\x02 \x01(\t\"6\n\x12\x41\x64minSetupResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"\'\n\x13TenantCreateRequest\x12\x10\n\x08username\x18\x01 \x01(\t\"\x7f\n\x14TenantCreateResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x11\n\ttenant_id\x18\x02 \x01(\t\x12\x1c\n\x14temporary_passphrase\x18\x03 \x01(\t\x12\x14\n\x0cnetwork_port\x18\x04 \x01(\r\x12\x0f\n\x07message\x18\x05 \x01(\t\"A\n\x14PasswordResetRequest\x12\x11\n\ttenant_id\x18\x01 \x01(\t\x12\x16\n\x0enew_passphrase\x18\x02 \x01(\t\"\x07\n\x05\x45mpty*[\n\x08Priority\x12\x11\n\rPRIORITY_IDLE\x10\x00\x12\x10\n\x0cPRIORITY_LOW\x10\x01\x12\x13\n\x0fPRIORITY_NORMAL\x10\x05\x12\x15\n\x11PRIORITY_CRITICAL\x10\n*\x87\x01\n\x0cProcessState\x12\x11\n\rSTATE_PENDING\x10\x00\x12\x11\n\rSTATE_RUNNING\x10\x01\x12\x11\n\rSTATE_BLOCKED\x10\x02\x12\x13\n\x0fSTATE_SUSPENDED\x10\x03\x12\x13\n\x0fSTATE_COMPLETED\x10\x04\x12\x14\n\x10STATE_TERMINATED\x10\x05*<\n\x0bSystemState\x12\x16\n\x12STATE_INITIALIZING\x10\x00\x12\x15\n\x11STATE_OPERATIONAL\x10\x01\x32\x85\x04\n\rKernelService\x12\x37\n\nSubmitTask\x12\x13.ank.v1.TaskRequest\x1a\x14.ank.v1.TaskResponse\x12:\n\tWatchTask\x12\x18.ank.v1.TaskSubscription\x1a\x11.ank.v1.TaskEvent0\x01\x12\x36\n\x0fGetSystemStatus\x12\r.ank.v1.Empty\x1a\x14.ank.v1.SystemStatus\x12\x33\n\rListProcesses\x12\r.ank.v1.Empty\x1a\x13.ank.v1.ProcessList\x12\x33\n\x0fTeleportProcess\x12\x0b.ank.v1.PCB\x1a\x11.ank.v1.TaskEvent0\x01\x12N\n\x15InitializeMasterAdmin\x12\x19.ank.v1.AdminSetupRequest\x1a\x1a.ank.v1.AdminSetupResponse\x12I\n\x0c\x43reateTenant\x12\x1b.ank.v1.TenantCreateRequest\x1a\x1c.ank.v1.TenantCreateResponse\x12\x42\n\x13ResetTenantPassword\x12\x1c.ank.v1.PasswordResetRequest\x1a\r.ank.v1.Emptyb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0ckernel.proto\x12\x06\x61nk.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\"\xc2\x01\n\x0bTaskRequest\x12\x0e\n\x06prompt\x18\x01 \x01(\t\x12\"\n\x08priority\x18\x02 \x01(\x0e\x32\x10.ank.v1.Priority\x12\'\n\x06policy\x18\x03 \x01(\x0b\x32\x17.ank.v1.ExecutionPolicy\x12\x30\n\x0finitial_context\x18\x04 \x01(\x0b\x32\x17.google.protobuf.Struct\x12\x16\n\ttenant_id\x18\x05 \x01(\tH\x00\x88\x01\x01\x42\x0c\n\n_tenant_id\"\xac\x01\n\x0f\x45xecutionPolicy\x12*\n\x04mode\x18\x01 \x01(\x0e\x32\x1c.ank.v1.ExecutionPolicy.Mode\x12\x1a\n\x12target_model_group\x18\x02 \x01(\t\x12\x13\n\x0bmax_retries\x18\x03 \x01(\r\"<\n\x04Mode\x12\x0f\n\x0bMODE_STRICT\x10\x00\x12\x11\n\rMODE_ADAPTIVE\x10\x01\x12\x10\n\x0cMODE_DRY_RUN\x10\x02\"\xc8\x04\n\x03PCB\x12\x0b\n\x03pid\x18\x01 \x01(\t\x12\x12\n\nparent_pid\x18\x02 \x01(\t\x12#\n\x05state\x18\x03 \x01(\x0e\x32\x14.ank.v1.ProcessState\x12\x14\n\x0cquantum_used\x18\x04 \x01(\r\x12\'\n\x06memory\x18\x05 \x01(\x0b\x32\x17.ank.v1.PCB.MemorySpace\x12\x38\n\x0finlined_context\x18\x06 \x03(\x0b\x32\x1f.ank.v1.PCB.InlinedContextEntry\x12.\n\ncreated_at\x18\x07 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x30\n\x0clast_updated\x18\x08 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x10\n\x08priority\x18\t \x01(\r\x12\x14\n\x0cprocess_name\x18\n \x01(\t\x12\x11\n\ttenant_id\x18\x0b \x01(\t\x1a\xad\x01\n\x0bMemorySpace\x12\x1b\n\x13instruction_pointer\x18\x01 \x01(\t\x12\x14\n\x0c\x63ontext_refs\x18\x02 \x03(\t\x12\x39\n\tregisters\x18\x03 \x03(\x0b\x32&.ank.v1.PCB.MemorySpace.RegistersEntry\x1a\x30\n\x0eRegistersEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x35\n\x13InlinedContextEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"X\n\x07Syscall\x12\x0c\n\x04name\x18\x01 \x01(\t\x12*\n\targuments\x18\x02 \x01(\x0b\x32\x17.google.protobuf.Struct\x12\x13\n\x0breturn_type\x18\x03 \x01(\t\"\xd2\x01\n\tTaskEvent\x12\x0b\n\x03pid\x18\x01 \x01(\t\x12-\n\ttimestamp\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x11\n\x07thought\x18\x03 \x01(\tH\x00\x12\"\n\x07syscall\x18\x04 \x01(\x0b\x32\x0f.ank.v1.SyscallH\x00\x12\x10\n\x06output\x18\x05 \x01(\tH\x00\x12$\n\rstatus_update\x18\x06 \x01(\x0b\x32\x0b.ank.v1.PCBH\x00\x12\x0f\n\x05\x65rror\x18\x07 \x01(\tH\x00\x42\t\n\x07payload\"E\n\x10TaskSubscription\x12\x0b\n\x03pid\x18\x01 \x01(\t\x12\x16\n\ttenant_id\x18\x02 \x01(\tH\x00\x88\x01\x01\x42\x0c\n\n_tenant_id\">\n\x0cTaskResponse\x12\x0b\n\x03pid\x18\x01 \x01(\t\x12\x10\n\x08\x61\x63\x63\x65pted\x18\x02 \x01(\x08\x12\x0f\n\x07message\x18\x03 \x01(\t\"-\n\x0bProcessList\x12\x1e\n\tprocesses\x18\x01 \x03(\x0b\x32\x0b.ank.v1.PCB\"\xce\x01\n\x0cSystemStatus\x12\x10\n\x08\x63pu_load\x18\x01 \x01(\x02\x12\x19\n\x11vram_allocated_mb\x18\x02 \x01(\x02\x12\x15\n\rvram_total_mb\x18\x03 \x01(\x02\x12\x17\n\x0ftotal_processes\x18\x04 \x01(\r\x12\x16\n\x0e\x61\x63tive_workers\x18\x05 \x01(\r\x12\x0e\n\x06uptime\x18\x06 \x01(\t\x12\x15\n\rloaded_models\x18\x07 \x03(\t\x12\"\n\x05state\x18\x08 \x01(\x0e\x32\x13.ank.v1.SystemState\"9\n\x11\x41\x64minSetupRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x12\n\npassphrase\x18\x02 \x01(\t\"6\n\x12\x41\x64minSetupResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"\'\n\x13TenantCreateRequest\x12\x10\n\x08username\x18\x01 \x01(\t\"\x7f\n\x14TenantCreateResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x11\n\ttenant_id\x18\x02 \x01(\t\x12\x1c\n\x14temporary_passphrase\x18\x03 \x01(\t\x12\x14\n\x0cnetwork_port\x18\x04 \x01(\r\x12\x0f\n\x07message\x18\x05 \x01(\t\"A\n\x14PasswordResetRequest\x12\x11\n\ttenant_id\x18\x01 \x01(\t\x12\x16\n\x0enew_passphrase\x18\x02 \x01(\t\"K\n\x13\x45ngineConfigRequest\x12\x0f\n\x07\x61pi_url\x18\x01 \x01(\t\x12\x12\n\nmodel_name\x18\x02 \x01(\t\x12\x0f\n\x07\x61pi_key\x18\x03 \x01(\t\"\x07\n\x05\x45mpty*[\n\x08Priority\x12\x11\n\rPRIORITY_IDLE\x10\x00\x12\x10\n\x0cPRIORITY_LOW\x10\x01\x12\x13\n\x0fPRIORITY_NORMAL\x10\x05\x12\x15\n\x11PRIORITY_CRITICAL\x10\n*\x87\x01\n\x0cProcessState\x12\x11\n\rSTATE_PENDING\x10\x00\x12\x11\n\rSTATE_RUNNING\x10\x01\x12\x11\n\rSTATE_BLOCKED\x10\x02\x12\x13\n\x0fSTATE_SUSPENDED\x10\x03\x12\x13\n\x0fSTATE_COMPLETED\x10\x04\x12\x14\n\x10STATE_TERMINATED\x10\x05*<\n\x0bSystemState\x12\x16\n\x12STATE_INITIALIZING\x10\x00\x12\x15\n\x11STATE_OPERATIONAL\x10\x01\x32\x80\x04\n\rKernelService\x12\x37\n\nSubmitTask\x12\x13.ank.v1.TaskRequest\x1a\x14.ank.v1.TaskResponse\x12:\n\tWatchTask\x12\x18.ank.v1.TaskSubscription\x1a\x11.ank.v1.TaskEvent0\x01\x12\x36\n\x0fGetSystemStatus\x12\r.ank.v1.Empty\x1a\x14.ank.v1.SystemStatus\x12\x33\n\rListProcesses\x12\r.ank.v1.Empty\x1a\x13.ank.v1.ProcessList\x12\x33\n\x0fTeleportProcess\x12\x0b.ank.v1.PCB\x1a\x11.ank.v1.TaskEvent0\x01\x12N\n\x15InitializeMasterAdmin\x12\x19.ank.v1.AdminSetupRequest\x1a\x1a.ank.v1.AdminSetupResponse\x12I\n\x0c\x43reateTenant\x12\x1b.ank.v1.TenantCreateRequest\x1a\x1c.ank.v1.TenantCreateResponse\x12=\n\x0f\x43onfigureEngine\x12\x1b.ank.v1.EngineConfigRequest\x1a\r.ank.v1.Emptyb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -37,12 +37,12 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_PCB_MEMORYSPACE_REGISTERSENTRY']._serialized_options = b'8\001'
   _globals['_PCB_INLINEDCONTEXTENTRY']._loaded_options = None
   _globals['_PCB_INLINEDCONTEXTENTRY']._serialized_options = b'8\001'
-  _globals['_PRIORITY']._serialized_start=2122
-  _globals['_PRIORITY']._serialized_end=2213
-  _globals['_PROCESSSTATE']._serialized_start=2216
-  _globals['_PROCESSSTATE']._serialized_end=2351
-  _globals['_SYSTEMSTATE']._serialized_start=2353
-  _globals['_SYSTEMSTATE']._serialized_end=2413
+  _globals['_PRIORITY']._serialized_start=2178
+  _globals['_PRIORITY']._serialized_end=2269
+  _globals['_PROCESSSTATE']._serialized_start=2272
+  _globals['_PROCESSSTATE']._serialized_end=2407
+  _globals['_SYSTEMSTATE']._serialized_start=2409
+  _globals['_SYSTEMSTATE']._serialized_end=2469
   _globals['_TASKREQUEST']._serialized_start=88
   _globals['_TASKREQUEST']._serialized_end=282
   _globals['_EXECUTIONPOLICY']._serialized_start=285
@@ -50,37 +50,39 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_EXECUTIONPOLICY_MODE']._serialized_start=397
   _globals['_EXECUTIONPOLICY_MODE']._serialized_end=457
   _globals['_PCB']._serialized_start=460
-  _globals['_PCB']._serialized_end=1065
-  _globals['_PCB_MEMORYSPACE']._serialized_start=837
-  _globals['_PCB_MEMORYSPACE']._serialized_end=1010
-  _globals['_PCB_MEMORYSPACE_REGISTERSENTRY']._serialized_start=962
-  _globals['_PCB_MEMORYSPACE_REGISTERSENTRY']._serialized_end=1010
-  _globals['_PCB_INLINEDCONTEXTENTRY']._serialized_start=1012
-  _globals['_PCB_INLINEDCONTEXTENTRY']._serialized_end=1065
-  _globals['_SYSCALL']._serialized_start=1067
-  _globals['_SYSCALL']._serialized_end=1155
-  _globals['_TASKEVENT']._serialized_start=1158
-  _globals['_TASKEVENT']._serialized_end=1368
-  _globals['_TASKSUBSCRIPTION']._serialized_start=1370
-  _globals['_TASKSUBSCRIPTION']._serialized_end=1439
-  _globals['_TASKRESPONSE']._serialized_start=1441
-  _globals['_TASKRESPONSE']._serialized_end=1503
-  _globals['_PROCESSLIST']._serialized_start=1505
-  _globals['_PROCESSLIST']._serialized_end=1550
-  _globals['_SYSTEMSTATUS']._serialized_start=1553
-  _globals['_SYSTEMSTATUS']._serialized_end=1759
-  _globals['_ADMINSETUPREQUEST']._serialized_start=1761
-  _globals['_ADMINSETUPREQUEST']._serialized_end=1818
-  _globals['_ADMINSETUPRESPONSE']._serialized_start=1820
-  _globals['_ADMINSETUPRESPONSE']._serialized_end=1874
-  _globals['_TENANTCREATEREQUEST']._serialized_start=1876
-  _globals['_TENANTCREATEREQUEST']._serialized_end=1915
-  _globals['_TENANTCREATERESPONSE']._serialized_start=1917
-  _globals['_TENANTCREATERESPONSE']._serialized_end=2044
-  _globals['_PASSWORDRESETREQUEST']._serialized_start=2046
-  _globals['_PASSWORDRESETREQUEST']._serialized_end=2111
-  _globals['_EMPTY']._serialized_start=2113
-  _globals['_EMPTY']._serialized_end=2120
-  _globals['_KERNELSERVICE']._serialized_start=2416
-  _globals['_KERNELSERVICE']._serialized_end=2933
+  _globals['_PCB']._serialized_end=1044
+  _globals['_PCB_MEMORYSPACE']._serialized_start=816
+  _globals['_PCB_MEMORYSPACE']._serialized_end=989
+  _globals['_PCB_MEMORYSPACE_REGISTERSENTRY']._serialized_start=941
+  _globals['_PCB_MEMORYSPACE_REGISTERSENTRY']._serialized_end=989
+  _globals['_PCB_INLINEDCONTEXTENTRY']._serialized_start=991
+  _globals['_PCB_INLINEDCONTEXTENTRY']._serialized_end=1044
+  _globals['_SYSCALL']._serialized_start=1046
+  _globals['_SYSCALL']._serialized_end=1134
+  _globals['_TASKEVENT']._serialized_start=1137
+  _globals['_TASKEVENT']._serialized_end=1347
+  _globals['_TASKSUBSCRIPTION']._serialized_start=1349
+  _globals['_TASKSUBSCRIPTION']._serialized_end=1418
+  _globals['_TASKRESPONSE']._serialized_start=1420
+  _globals['_TASKRESPONSE']._serialized_end=1482
+  _globals['_PROCESSLIST']._serialized_start=1484
+  _globals['_PROCESSLIST']._serialized_end=1529
+  _globals['_SYSTEMSTATUS']._serialized_start=1532
+  _globals['_SYSTEMSTATUS']._serialized_end=1738
+  _globals['_ADMINSETUPREQUEST']._serialized_start=1740
+  _globals['_ADMINSETUPREQUEST']._serialized_end=1797
+  _globals['_ADMINSETUPRESPONSE']._serialized_start=1799
+  _globals['_ADMINSETUPRESPONSE']._serialized_end=1853
+  _globals['_TENANTCREATEREQUEST']._serialized_start=1855
+  _globals['_TENANTCREATEREQUEST']._serialized_end=1894
+  _globals['_TENANTCREATERESPONSE']._serialized_start=1896
+  _globals['_TENANTCREATERESPONSE']._serialized_end=2023
+  _globals['_PASSWORDRESETREQUEST']._serialized_start=2025
+  _globals['_PASSWORDRESETREQUEST']._serialized_end=2090
+  _globals['_ENGINECONFIGREQUEST']._serialized_start=2092
+  _globals['_ENGINECONFIGREQUEST']._serialized_end=2167
+  _globals['_EMPTY']._serialized_start=2169
+  _globals['_EMPTY']._serialized_end=2176
+  _globals['_KERNELSERVICE']._serialized_start=2472
+  _globals['_KERNELSERVICE']._serialized_end=2984
 # @@protoc_insertion_point(module_scope)

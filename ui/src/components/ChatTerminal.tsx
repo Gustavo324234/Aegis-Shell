@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Terminal, Settings, AlertCircle, Cpu, Mic, MicOff } from 'lucide-react';
+import { Send, Terminal, Settings, AlertCircle, Cpu, Mic, MicOff, Paperclip, Loader2 } from 'lucide-react';
 import { useAegisStore, Message } from '../store/useAegisStore';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -93,11 +93,13 @@ const MessageItem: React.FC<{ message: Message }> = ({ message }) => {
 };
 
 const ChatTerminal: React.FC = () => {
-    const { messages, sendMessage, status, isRecording, startSirenStream, stopSirenStream } = useAegisStore();
+    const { messages, sendMessage, status, isRecording, startSirenStream, stopSirenStream, tenantId, sessionKey, addSystemMessage } = useAegisStore();
     const scrollRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const isAtBottom = useRef(true);
     const [input, setInput] = useState('');
     const [voiceError, setVoiceError] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
         if (scrollRef.current) {
@@ -158,8 +160,76 @@ const ChatTerminal: React.FC = () => {
         }
     };
 
+    const handleFileUploadChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !tenantId || !sessionKey) return;
+
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('tenant_id', tenantId);
+            formData.append('session_key', sessionKey);
+            formData.append('file', file);
+
+            const response = await fetch('/api/workspace/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.detail || 'Upload failed');
+            }
+
+            addSystemMessage(`Archivo \`${file.name}\` inyectado en el Workspace.`);
+        } catch (err: any) {
+            console.error('File Upload Error:', err);
+            addSystemMessage(`Error al inyectar archivo: ${err.message}`);
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files?.[0];
+        if (!file || !tenantId || !sessionKey || isUploading) return;
+
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('tenant_id', tenantId);
+            formData.append('session_key', sessionKey);
+            formData.append('file', file);
+
+            const response = await fetch('/api/workspace/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.detail || 'Upload failed');
+            }
+
+            addSystemMessage(`Archivo \`${file.name}\` inyectado en el Workspace.`);
+        } catch (err: any) {
+            console.error('File Upload Error:', err);
+            addSystemMessage(`Error al inyectar archivo: ${err.message}`);
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
+
     return (
-        <div className="flex h-screen bg-black text-white overflow-hidden font-sans">
+        <div
+            className="flex h-screen bg-black text-white overflow-hidden font-sans"
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+        >
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col min-w-0">
                 {/* Header / Telemetry Bar */}
@@ -224,6 +294,25 @@ const ChatTerminal: React.FC = () => {
                                 className="w-full bg-transparent border-none focus:ring-0 text-sm py-2 px-3 resize-none max-h-32 min-h-[40px] font-mono placeholder:text-white/20"
                                 rows={1}
                             />
+
+                            <input
+                                type="file"
+                                className="hidden"
+                                ref={fileInputRef}
+                                onChange={handleFileUploadChange}
+                            />
+
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isUploading}
+                                className={cn(
+                                    "p-2 rounded-lg transition-all",
+                                    isUploading ? "text-aegis-cyan animate-pulse" : "bg-white/5 text-white/40 hover:text-white hover:bg-white/10"
+                                )}
+                                title="Inject File to Workspace"
+                            >
+                                {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
+                            </button>
 
                             <button
                                 onClick={handleToggleMic}

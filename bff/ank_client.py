@@ -138,6 +138,30 @@ class AnkClient:
             print(f"gRPC Error in CreateTenant: {e}")
             raise
 
+    async def configure_engine(
+        self,
+        tenant_id: str,
+        session_key: str,
+        api_url: str,
+        model_name: str,
+        api_key: str,
+    ):
+        if not self.stub:
+            self.channel = grpc.aio.insecure_channel(self.target)
+            self.stub = kernel_pb2_grpc.KernelServiceStub(self.channel)
+
+        request = kernel_pb2.EngineConfigRequest(
+            api_url=api_url, model_name=model_name, api_key=api_key
+        )
+        metadata = self._get_metadata(tenant_id, session_key)
+
+        try:
+            await self.stub.ConfigureEngine(request, metadata=metadata)
+            return True
+        except grpc.RpcError as e:
+            print(f"gRPC Error in ConfigureEngine: {e}")
+            raise
+
     async def reset_tenant_password(
         self,
         tenant_id: str,
