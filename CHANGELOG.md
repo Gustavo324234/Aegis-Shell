@@ -3,6 +3,15 @@
 ## [1.2.1] - Unreleased
 
 ### Added
+- **[SH-128] Browser-Side VAD & Push-To-Talk Fallback:**
+  - Implementado `AnalyserNode` en el flujo de Web Audio para analizar RMS en tiempo real sin bloquear el hilo de renderizado (`requestAnimationFrame`).
+  - Lógica de auto-desconexión (Auto-VAD) que monitorea un umbral de ruido e inyecta la señal `{ "format": "VAD_END_SIGNAL" }` al pausar la voz durante 1500ms.
+  - Refinado el flujo *Tap-to-Talk* del micrófono en la UI, garantizando que el Kernel dispare STT sin requerir binarios pesados (C++) de Detección de Actividad de Voz.
+- **[SH-129] SVG Brand Integration:**
+  - Creado el componente React `AegisLogo.tsx` que carga de manera directa los SVGs `aegis_logo.svg` y `logo_icon.svg` mediante `vite-plugin-svgr`.
+  - Agregado fallback *Zero-Panic* que renderiza `<span>AEGIS</span>` en caso de fallar la carga, asegurando la robustez de la UI.
+  - Reemplazado el icono `Shield` en la pantalla de inicio y `Terminal` en el header de ChatTerminal por el nuevo logo dinámico con colores de Tailwind.
+  - Actualizado favicon a `logo_icon.svg` para preservar el Branding de Aegis OS.
 - **[SH-126] Engine Setup Wizard:**
   - Dynamic Cognitive Engine configuration from the user interface.
   - VRAM Telemetry detection to suggest Local vs Cloud Inference.

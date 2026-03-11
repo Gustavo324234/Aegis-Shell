@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Lock, User, Terminal, ChevronRight } from 'lucide-react';
+import { Lock, User, Terminal, ChevronRight } from 'lucide-react';
 import { useAegisStore } from '../store/useAegisStore';
+import { AegisLogo } from './AegisLogo';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -58,7 +59,7 @@ const LoginScreen: React.FC = () => {
                                 className="absolute -inset-4 border border-dashed border-aegis-cyan/20 rounded-full"
                             />
                             <div className="p-4 rounded-full bg-aegis-cyan/10 border border-aegis-cyan/30 relative">
-                                <Shield className="w-10 h-10 text-aegis-cyan" />
+                                <AegisLogo variant="icon" className="w-10 h-10 text-aegis-cyan" />
                             </div>
                         </div>
 

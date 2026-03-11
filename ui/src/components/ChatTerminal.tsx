@@ -2,8 +2,9 @@ import React, { useRef, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Terminal, Settings, AlertCircle, Cpu, Mic, MicOff, Paperclip, Loader2 } from 'lucide-react';
+import { Send, Settings, AlertCircle, Cpu, Mic, MicOff, Paperclip, Loader2 } from 'lucide-react';
 import { useAegisStore, Message } from '../store/useAegisStore';
+import { AegisLogo } from './AegisLogo';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import TelemetrySidebar from './TelemetrySidebar';
@@ -235,7 +236,7 @@ const ChatTerminal: React.FC = () => {
                 {/* Header / Telemetry Bar */}
                 <div className="h-16 border-b border-white/5 flex items-center justify-between px-6 bg-black/50 backdrop-blur-sm z-20 overflow-visible">
                     <div className="flex items-center gap-3">
-                        <Terminal className="w-5 h-5 text-aegis-cyan" />
+                        <AegisLogo variant="icon" className="w-5 h-5 text-aegis-cyan" />
                         <div className="flex flex-col">
                             <span className="text-[10px] font-mono tracking-widest text-aegis-cyan font-bold uppercase">Aegis Shell v0.1.0</span>
                             <span className="text-[8px] font-mono text-white/20 uppercase">Ring 0 Secure Link</span>

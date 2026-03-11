@@ -334,6 +334,43 @@ export const useAegisStore = create<AegisState>((set, get) => ({
             const source = ctx.createMediaStreamSource(stream);
             const scriptNode = ctx.createScriptProcessor(4096, 1, 1);
 
+            // 2.5 Setup AnalyserNode for Auto-VAD
+            const analyser = ctx.createAnalyser();
+            analyser.fftSize = 256;
+            analyser.smoothingTimeConstant = 0.2;
+            source.connect(analyser);
+
+            let silenceStart = Date.now();
+            const SILENCE_THRESHOLD = 5; // Ambient noise threshold
+            const MAX_SILENCE_MS = 1500;
+            let vadRequestedStop = false;
+
+            const checkSilence = () => {
+                if (!get().isRecording || vadRequestedStop) return;
+
+                const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                analyser.getByteFrequencyData(dataArray);
+
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    sum += dataArray[i];
+                }
+                const average = sum / dataArray.length;
+
+                if (average < SILENCE_THRESHOLD) {
+                    if (Date.now() - silenceStart > MAX_SILENCE_MS) {
+                        console.log('🔇 Auto-VAD: Silence detected, stopping Siren Stream');
+                        vadRequestedStop = true;
+                        get().stopSirenStream();
+                        return;
+                    }
+                } else {
+                    silenceStart = Date.now();
+                }
+
+                requestAnimationFrame(checkSilence);
+            };
+
             // 3. Setup Dedicated WebSocket
             const wsUrl = `ws://${window.location.hostname}:8000/ws/siren/${tenantId}?session_key=${sessionKey}`;
             const sirenWs = new WebSocket(wsUrl);
@@ -342,6 +379,8 @@ export const useAegisStore = create<AegisState>((set, get) => ({
             sirenWs.onopen = () => {
                 console.log('📡 Siren Stream: Pipe established');
                 set({ isRecording: true, sirenSocket: sirenWs });
+                // Start Auto-VAD monitoring
+                requestAnimationFrame(checkSilence);
             };
 
             sirenWs.onmessage = (event) => {
@@ -441,11 +480,26 @@ export const useAegisStore = create<AegisState>((set, get) => ({
     stopSirenStream: () => {
         const { sirenSocket } = get();
 
-        // 1. Close Socket
-        if (sirenSocket) {
+        // 1. Enviar Señal de VAD END
+        if (sirenSocket && sirenSocket.readyState === WebSocket.OPEN) {
+            sirenSocket.send(JSON.stringify({
+                sequence_number: 9999,
+                data: "",
+                format: "VAD_END_SIGNAL",
+                sample_rate: 16000
+            }));
+
+            // Pequeño retardo para asegurar envío antes de cerrar socket
+            setTimeout(() => {
+                if (sirenSocket.readyState === WebSocket.OPEN) {
+                    sirenSocket.close();
+                }
+            }, 100);
+        } else if (sirenSocket) {
             sirenSocket.close();
-            set({ sirenSocket: null });
         }
+        
+        set({ sirenSocket: null });
 
         // 2. Stop Audio Pipeline
         const stream = (window as any)._aegis_audio_stream as MediaStream;
