@@ -1,6 +1,8 @@
 # 🗺️ Aegis Shell Project Tracking (Kanban)
 
 ## 🟩 DONE
+*   **[ANK-901-SHELL] SRE Firewall (CI Pull Request Guard)**
+    *   *Completado:* Pipeline de CI implementado para Backend (Python) y Frontend (Node/Vite).
 *   **[SEC-001] Path Traversal in BFF**
     *   *Completado:* Mitigación de escape de directorio `../` en la validación de archivos estáticos.
 *   **[SH-100] Setup del Workspace (Vite + FastAPI)**

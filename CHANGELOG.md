@@ -3,6 +3,11 @@
 ## [1.2.1] - Unreleased
 
 ### Added
+- **[ANK-901-SHELL] SRE Firewall (CI Pull Request Guard):**
+  - Implementación de `.github/workflows/pr_check.yml` para la auditoría automática de integridad en el repositorio de la Shell.
+  - Job de Backend: Validación de sintaxis con Flake8, formato con Black y ejecución de tests con Pytest sobre FastAPI.
+  - Job de Frontend: Instalación limpia (`npm ci`), linting de ESLint y verificación de Build de producción (Vite).
+  - Política Zero-Panic: Fallo inmediato ante cualquier regresión de calidad para proteger la rama `main`.
 - **[SH-128] Browser-Side VAD & Push-To-Talk Fallback:**
   - Implementado `AnalyserNode` en el flujo de Web Audio para analizar RMS en tiempo real sin bloquear el hilo de renderizado (`requestAnimationFrame`).
   - Lógica de auto-desconexión (Auto-VAD) que monitorea un umbral de ruido e inyecta la señal `{ "format": "VAD_END_SIGNAL" }` al pausar la voz durante 1500ms.
