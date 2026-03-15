@@ -1,0 +1,101 @@
+# ============================================================
+# Aegis Shell — GHCR Publishing Pipeline
+# Ticket: SH-4002 | Shell Orchestration & GHCR Publishing
+# Model: Pull-on-Deploy (pre-built in CI, zero build on edge)
+# Parity: Mirrors ANK-4001 pattern for Aegis-Shell image.
+# ============================================================
+name: "🐋 Docker Publish → GHCR"
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+
+# SRE Law: Minimal-privilege token scoping.
+# `contents: read`  — read source code only.
+# `packages: write` — mandatory for pushing to GHCR.
+permissions:
+  contents: read
+  packages: write
+
+env:
+  # Base image name before lowercase sanitisation.
+  # `github.repository_owner` targets the account namespace, not the
+  # full repo slug, so the image will be `ghcr.io/<owner>/aegis-shell`.
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/aegis-shell
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build-and-push:
+    name: "Build & Push Shell Image"
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────────────
+      - name: "📥 Checkout source"
+        uses: actions/checkout@v4
+
+      # ── 2. Convert image name to lowercase ─────────────────────────
+      # GitHub handles usernames case-insensitively, but GHCR image
+      # references MUST be fully lowercase. TR is more portable than
+      # bash-only `${VAR,,}` across different runner environments.
+      - name: "🔡 Sanitise image name (lowercase)"
+        id: image
+        run: |
+          LOWERCASE_IMAGE=$(echo "${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+          echo "name=${LOWERCASE_IMAGE}" >> "$GITHUB_OUTPUT"
+
+      # ── 3. Docker meta ─────────────────────────────────────────────
+      # Generates OCI-compliant tags and labels automatically:
+      #   • push to main  → :latest
+      #   • push tag v*   → :<semver>  +  :<major>.<minor>  +  :latest
+      - name: "🏷️  Extract Docker metadata"
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.image.outputs.name }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      # ── 4. Set up Docker Buildx ────────────────────────────────────
+      # Required for advanced build cache and potential multi-platform
+      # support in the future (amd64 edge + arm64 Raspberry Pi targets).
+      - name: "🔧 Set up Docker Buildx"
+        uses: docker/setup-buildx-action@v3
+
+      # ── 5. Authenticate to GHCR ────────────────────────────────────
+      # Uses the ephemeral GITHUB_TOKEN — no manual secrets needed.
+      - name: "🔐 Log in to GitHub Container Registry"
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── 6. Build & Push ────────────────────────────────────────────
+      # Zero-Panic SRE gate: the Dockerfile's multi-stage pipeline will
+      # propagate exit 1 on:
+      #   • Stage 1 (ui-builder): `npm run build` failure → broken React.
+      #   • Stage 2 (runtime):    `pip install` failure   → missing deps.
+      # Either failure aborts the workflow — a corrupt image is NEVER
+      # published to GHCR.
+      #
+      # Cache strategy:
+      #   • `npm install`  benefits most from layer cache (node_modules).
+      #   • `pip install`  is slim; `--no-cache-dir` keeps layers lean.
+      #   • type=gha stores layers in the GitHub Actions Cache API,
+      #     shared across branches for maximum reuse.
+      - name: "🚀 Build and push Docker image"
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
