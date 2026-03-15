@@ -1,6 +1,8 @@
 # 🗺️ Aegis Shell Project Tracking (Kanban)
 
 ## 🟩 DONE
+*   **[SH-4002] Edge Orchestration — GHCR Publishing Pipeline (Pull-on-Deploy)**
+    *   *Completado:* `.github/workflows/docker-publish.yml` creado. Imagen `ghcr.io/<owner>/aegis-shell` publicada en GHCR en cada push a `main` y tags `v*`. Zero-Panic gate multi-stage activo (`npm run build` + `pip install`). Layer cache `type=gha`.
 *   **[ANK-901-SHELL] SRE Firewall (CI Pull Request Guard)**
     *   *Completado:* Pipeline de CI implementado para Backend (Python) y Frontend (Node/Vite).
 *   **[SEC-001] Path Traversal in BFF**

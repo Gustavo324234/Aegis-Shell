@@ -3,7 +3,18 @@
 ## [1.2.1] - Unreleased
 
 ### Added
+- **[SH-4002] Edge Orchestration — GHCR Publishing Pipeline (Pull-on-Deploy):**
+  - Transición de arquitectura `Build-on-Deploy` → `Pull-on-Deploy` en paridad con `ANK-4001` del Kernel.
+  - Creación de `.github/workflows/docker-publish.yml` con triggers en `push` a `main` y tags `v*`.
+  - Autenticación automática a GHCR con `GITHUB_TOKEN` (`packages: write`) mediante `docker/login-action@v3`.
+  - Extracción de tags OCI-compliant con `docker/metadata-action@v5` (`:latest` en `main`, `:<semver>` en tags).
+  - Sanitización de nombre de imagen a minúsculas vía `tr` — imagen publicada bajo `ghcr.io/<owner>/aegis-shell`.
+  - Build y push a GHCR con `docker/build-push-action@v5`.
+  - Layer cache `type=gha` maximizando reutilización de capas `node_modules` (`npm install`) entre builds.
+  - Zero-Panic gate: el pipeline multi-stage del `Dockerfile` aborta el publish ante fallos de `npm run build` o `pip install`, garantizando integridad de la imagen.
+
 - **[ANK-901-SHELL] SRE Firewall (CI Pull Request Guard):**
+
   - Implementación de `.github/workflows/pr_check.yml` para la auditoría automática de integridad en el repositorio de la Shell.
   - Job de Backend: Validación de sintaxis con Flake8, formato con Black y ejecución de tests con Pytest sobre FastAPI.
   - Job de Frontend: Instalación limpia (`npm ci`), linting de ESLint y verificación de Build de producción (Vite).
