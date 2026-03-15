@@ -36,10 +36,13 @@ jobs:
 
       - name: Syntax Check (Flake8 - El Gatillero)
         run: |
-          # stop the build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # stop the build if there are Python syntax errors or undefined names.
+          # Exclude auto-generated protobuf stubs (grpc_tools.protoc output).
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics \
+            --extend-exclude='*_pb2.py,*_pb2_grpc.py'
 
       - name: Format Check (Black)
+        # black reads pyproject.toml automatically; pb2 files are excluded there.
         run: black --check .
 
       - name: Critical Tests (Pytest)
